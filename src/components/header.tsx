@@ -13,41 +13,34 @@ export function Header() {
         <h1 className="text-2xl font-bold">Payroll Manager</h1>
       </div>
       <div className="flex items-center gap-4">
-        {/* {user ? ( */}
-        <>
-          <div className="text-sm text-gray-700">
-            Signed in as{" "}
-            <span className="font-medium">{user?.username || "Kele"}</span>
-          </div>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-3 py-1 border rounded cursor-pointer"
-          >
-            Dashboard
-          </button>
+        {user && (
+          <>
+            <div className="text-sm text-gray-700">
+              Signed in as{" "}
+              <span className="font-medium">{user?.username || "Kele"}</span>
+            </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="px-3 py-1 border rounded cursor-pointer"
+            >
+              Dashboard
+            </button>
 
-          <button
-            onClick={() => navigate("/dashboard/admin")}
-            className="px-3 py-1 border rounded cursor-pointer"
-          >
-            Admin
-          </button>
+            <button
+              onClick={() => navigate("/dashboard/admin")}
+              className="px-3 py-1 border rounded cursor-pointer"
+            >
+              Admin
+            </button>
 
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1 border rounded cursor-pointer"
-          >
-            Logout
-          </button>
-        </>
-        {/* ) : ( */}
-        <button
-          onClick={() => navigate("/")}
-          className="px-3 py-1 border rounded cursor-pointer"
-        >
-          Login
-        </button>
-        {/* )} */}
+            <button
+              onClick={handleLogout}
+              className="px-3 py-1 border rounded cursor-pointer"
+            >
+              Logout
+            </button>
+          </>
+        )}
       </div>
     </header>
   );
