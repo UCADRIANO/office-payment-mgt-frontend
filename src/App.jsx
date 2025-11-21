@@ -88,6 +88,12 @@ const BANKS = [
   "Wema Bank",
   "Fidelity Bank",
 ];
+const SUBSECT = [
+  "Sub Sector 1A",
+  "Sub Sector 1B",
+  "Sub Sector 1C",
+  "Sub Sector 1D",
+];
 
 // localStorage helpers
 const LS_USERS = "ps_users_v1";
@@ -516,7 +522,7 @@ export default function PayrollSingleFileApp() {
       </div>
 
       <footer className="text-center text-xs text-gray-500 p-4">
-        Payroll demo • Data stored in browser localStorage
+        401 Payroll • Data stored in browser localStorage
       </footer>
     </div>
   );
@@ -528,7 +534,7 @@ function Header({ user, onLogout, onNavigate }) {
   return (
     <header className="flex items-center justify-between mb-4">
       <div>
-        <h1 className="text-2xl font-bold">Payroll Manager (Demo)</h1>
+        <h1 className="text-2xl font-bold">401 SF Bde Payroll Manager</h1>
         <p className="text-sm text-gray-500">
           LocalStorage • Single-file example
         </p>
@@ -913,12 +919,19 @@ function EmployeeForm({
         placeholder="Account number *"
         className="border p-2 rounded"
       />
-      <input
+
+      <select
         value={state.subSector}
         onChange={(e) => set("subSector", e.target.value)}
-        placeholder="Sub sector *"
         className="border p-2 rounded"
-      />
+      >
+        <option value="">Select Sub-Sector *</option>
+        {SUBSECT.map((s) => (
+          <option key={s} value={s}>
+            {s}
+          </option>
+        ))}
+      </select>
       <input
         value={state.location}
         onChange={(e) => set("location", e.target.value)}
