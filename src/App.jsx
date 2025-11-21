@@ -1,22 +1,59 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
+// import React, { useEffect, useState, useRef } from "react";
+// import { Routes, Route, useNavigate } from "react-router-dom";
+// import Dashboard from "./pages/Dashboard";
+// import LoginPage from "./pages/LoginPage";
+// import AdminUsers from "./pages/AdminUsers";
+// import DBView from "./pages/DBView";
+// import {
+//   createDefaultAdminIfEmpty,
+//   readSession,
+//   writeSession,
+// } from "./utils/storage";
+// import Header from "./components/Header";
+
+// export default function App() {
+//   useEffect(() => createDefaultAdminIfEmpty(), []);
+
+//   const [user, setUser] = useState(() => readSession());
+//   useEffect(() => writeSession(user), [user]);
+
+//   const navigate = useNavigate();
+
+//   const onLogout = () => {
+//     setUser(null);
+//     navigate("/login");
+//   };
+
+//   const onNavigate = (p) => navigate(p);
+
+//   return (
+//     <div className="min-h-screen bg-gray-50 text-gray-900">
+//       <div className="max-w-6xl mx-auto p-4">
+//         <Header user={user} onLogout={onLogout} onNavigate={onNavigate} />
+
+//         <Routes>
+//           <Route
+//             path="/login"
+//             element={<LoginPage onLogin={(u) => setUser(u)} />}
+//           />
+//           <Route path="/" element={<Dashboard user={user} />} />
+//           <Route path="/dashboard" element={<Dashboard user={user} />} />
+//           <Route path="/admin-users" element={<AdminUsers user={user} />} />
+//           <Route path="/db/:dbName" element={<DBView user={user} />} />
+//           <Route path="*" element={<Dashboard user={user} />} />
+//         </Routes>
+//       </div>
+
+//       <footer className="text-center text-xs text-gray-500 p-4">
+//         Payroll demo • Data stored in browser localStorage
+//       </footer>
+//     </div>
+//   );
+// }
+
 import "./App.css";
 
 import React, { useEffect, useState, useRef } from "react";
-
-/**
- * Single-file React App: Payroll management (localStorage)
- * - No external libraries required
- * - Uses localStorage for persistence
- * - Exports CSV and Print (use browser Print -> Save as PDF)
- * - Tailwind classes used for styling (project should include Tailwind)
- *
- * How to use:
- * 1. Create a Vite React project (React + Tailwind recommended)
- * 2. Paste this file as src/App.jsx and run `npm run dev`
- * 3. Default admin: username=admin password=admin
- */
 
 const DB_NAMES = ["OPWS", "CHEC", "SETRACO", "ZHONG"];
 const RANKS = [
