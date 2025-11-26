@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DB_NAMES } from "../data/constants";
@@ -6,8 +6,21 @@ import {
   CreateUserSchemaType,
   userSchema,
 } from "../validations/user.validation";
+import { toast } from "sonner";
+import {
+  QueryClient,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { createUser, editUser } from "../services/admin.service";
+import { Button } from "../components/ui/button";
 
-export function CreateUserForm() {
+interface CreateUserFormProps {
+  userToEdit?: Partial<CreateUserSchemaType> & { army_number: string };
+  onCancel?: () => void;
+}
+
+export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
   const {
     register,
     handleSubmit,
@@ -15,37 +28,69 @@ export function CreateUserForm() {
     setValue,
     getValues,
     trigger,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CreateUserSchemaType>({
     resolver: zodResolver(userSchema),
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      allowedDBs: [],
+      allowed_dbs: [],
+    },
+  });
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (userToEdit) {
+      Object.entries(userToEdit).forEach(([key, value]) => {
+        setValue(key as any, value);
+      });
+    } else {
+      reset();
+    }
+  }, [userToEdit, setValue, reset]);
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: createUser,
+    onSuccess: (response) => {
+      toast.success(response?.data.message);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      reset();
+    },
+  });
+
+  const { mutate: editUserMutation, isPending: isEditingUser } = useMutation({
+    mutationFn: editUser,
+    onSuccess: (response) => {
+      //  console.log("login res:", response?.data.data);
+      toast.success(response?.data.message);
     },
   });
 
   const onCreate = (data: CreateUserSchemaType) => {
-    console.log("User Created:", data);
-    reset();
+    if (userToEdit) {
+      editUserMutation(data);
+    } else {
+      mutate(data);
+    }
   };
 
   const handleCheckboxChange = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const { value, checked } = e.target;
-    const currentValues = getValues("allowedDBs") || [];
+    const currentValues = getValues("allowed_dbs") || [];
 
     if (checked) {
-      setValue("allowedDBs", [...currentValues, value]);
+      setValue("allowed_dbs", [...currentValues, value]);
     } else {
       setValue(
-        "allowedDBs",
+        "allowed_dbs",
         currentValues.filter((d) => d !== value)
       );
     }
 
-    await trigger("allowedDBs");
+    await trigger("allowed_dbs");
   };
 
   return (
@@ -54,17 +99,47 @@ export function CreateUserForm() {
       className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3"
     >
       <div className="flex flex-col">
-        <label htmlFor="username" className="mb-1 font-medium">
-          Username
+        <label htmlFor="first_name" className="mb-1 font-medium">
+          First name
         </label>
         <input
-          id="username"
-          {...register("username")}
-          placeholder="Enter your username"
+          id="first_name"
+          {...register("first_name")}
+          placeholder="Enter first name"
           className="border p-2 rounded w-full"
         />
-        {errors.username && (
-          <p className="text-red-500 text-sm">{errors.username.message}</p>
+        {errors.first_name && (
+          <p className="text-red-500 text-sm">{errors.first_name.message}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col">
+        <label htmlFor="last_name" className="mb-1 font-medium">
+          Last name
+        </label>
+        <input
+          id="last_name"
+          {...register("last_name")}
+          placeholder="Enter last name"
+          className="border p-2 rounded w-full"
+        />
+        {errors.last_name && (
+          <p className="text-red-500 text-sm">{errors.last_name.message}</p>
+        )}
+      </div>
+
+      <div className="flex flex-col">
+        <label htmlFor="army_number" className="mb-1 font-medium">
+          Army number
+        </label>
+        <input
+          id="army_number"
+          {...register("army_number")}
+          placeholder="Enter army number"
+          className="border p-2 rounded w-full"
+        />
+        {errors.army_number && (
+          <p className="text-red-500 text-sm">{errors.army_number.message}</p>
         )}
       </div>
 
@@ -117,19 +192,31 @@ export function CreateUserForm() {
             ))}
           </div>
         </div>
-        {errors.allowedDBs && (
-          <p className="text-red-500 text-sm">{errors.allowedDBs.message}</p>
+        {errors.allowed_dbs && (
+          <p className="text-red-500 text-sm">{errors.allowed_dbs.message}</p>
         )}
       </div>
 
-      <div className="md:col-span-2">
-        <button
-          disabled={isSubmitting}
+      <div className="flex gap-10 md:col-span-2">
+        <Button
           type="submit"
-          className="px-4 py-2 bg-green-600 text-white rounded w-full cursor-pointer"
+          isLoading={isPending || isEditingUser}
+          className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer"
         >
-          Create user
-        </button>
+          {userToEdit ? "Update user" : "Create user"}
+        </Button>
+        {userToEdit && (
+          <Button
+            type="button"
+            onClick={() => {
+              reset();
+              onCancel?.();
+            }}
+            className="px-4 py-2 border rounded cursor-pointer"
+          >
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

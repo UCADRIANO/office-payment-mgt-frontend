@@ -1,7 +1,27 @@
 import React from "react";
 import users from "../data";
+import { User } from "../interfaces";
+import { useMutation } from "@tanstack/react-query";
+import { deleteUser } from "../services/admin.service";
+import { toast } from "sonner";
+import { DeleteUserDialog } from "./delete-user-dialog";
 
-export function UserList() {
+interface UserListProps {
+  onEdit: (user: User) => void;
+}
+
+export function UserList({ onEdit }: UserListProps) {
+  const { mutate, isPending } = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: (response) => {
+      //  console.log("login res:", response?.data.data);
+      toast.success(response?.data.message);
+    },
+  });
+
+  const handleDelete = (user: User) => {
+    mutate(user?.army_number);
+  };
   return (
     <div className="mt-2">
       <table className="w-full border-collapse">
@@ -14,25 +34,26 @@ export function UserList() {
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td className="p-2 border">{u.username}</td>
-              <td className="p-2 border">{u.role}</td>
-              <td className="p-2 border">{(u.allowedDBs || []).join(", ")}</td>
+          {users.map((user) => (
+            <tr key={user?.army_number}>
+              <td className="p-2 border">{user.first_name}</td>
+              <td className="p-2 border">{user.role}</td>
+              <td className="p-2 border">
+                {(user.allowed_dbs || []).join(", ")}
+              </td>
               <td className="p-2 border">
                 <div className="flex gap-2">
                   <button
-                    onClick={() => alert("Edit user not implemented")}
-                    className="px-2 py-1 border rounded"
+                    onClick={() => onEdit(user)}
+                    className="px-2 py-1 border rounded cursor-pointer"
                   >
                     Edit
                   </button>
-                  <button
-                    onClick={() => alert("User deleted")}
-                    className="px-2 py-1 border rounded text-red-600"
-                  >
-                    Delete
-                  </button>
+                  <DeleteUserDialog
+                    onConfirm={() => handleDelete(user)}
+                    isPending={isPending}
+                    user={user}
+                  />
                 </div>
               </td>
             </tr>

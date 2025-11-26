@@ -1,16 +1,8 @@
-import { CreateUserData, Record } from "../interfaces";
+import { Record } from "../interfaces";
 import api from "./base.service";
 
 export const getUsers = async () => {
   return await api.get("/users");
-};
-
-export const createUser = async (data: CreateUserData) => {
-  return await api.post("/users", data);
-};
-
-export const deleteUser = async (id: string) => {
-  return await api.delete(`/users/${id}`);
 };
 
 export const getRecords = async (db: string) => {

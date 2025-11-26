@@ -1,9 +1,9 @@
 export interface User {
-  id: string;
-  username: string;
-  password?: string;
+  army_number: string;
+  first_name: string;
+  last_name: string;
   role: "admin" | "user";
-  allowedDBs: string[];
+  allowed_dbs: string[];
 }
 
 export interface Record {
@@ -23,21 +23,18 @@ export interface Record {
   updatedAt?: string;
 }
 
-export interface Message {
-  type: "success" | "error";
-  text: string;
-}
-
 export interface LoginCredentials {
-  username: string;
+  army_number: string;
   password: string;
 }
 
 export interface CreateUserData {
-  username: string;
+  first_name: string;
+  last_name: string;
+  army_number: string;
   password: string;
   role: "admin" | "user";
-  allowedDBs: string[];
+  allowed_dbs: string[];
 }
 
 export type ViewType = "login" | "dashboard" | "admin-users" | "db";

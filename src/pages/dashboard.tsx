@@ -1,9 +1,11 @@
 import React from "react";
 import { DB_NAMES } from "../data/constants";
 import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../store/app-store";
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAppStore();
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -31,21 +33,28 @@ export function DashboardPage() {
               Open default DB
             </button>
 
-            <button
-              onClick={() => navigate(`/dashboard/admin`)}
-              className="w-full p-2 border rounded"
-            >
-              Manage Users
-            </button>
+            {user?.role === "admin" && (
+              <button
+                onClick={() => navigate(`/dashboard/admin`)}
+                className="w-full p-2 border rounded"
+              >
+                Manage Users
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       <div className="md:col-span-3">
         <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-lg font-semibold">Welcome, Kele</h2>
+          <h2 className="text-lg font-semibold">Welcome, {user?.first_name}</h2>
           <p className="text-sm text-gray-500">
-            Role: admin — Allowed DBs: OPWS, CHEC, SETRACO, ZHONG
+            Role: admin — Allowed DBs:{" "}
+            {user?.allowed_dbs && user.allowed_dbs.length > 0 ? (
+              user.allowed_dbs.map((db) => <span key={db}>{db} </span>)
+            ) : (
+              <> OPWS, CHEC, SETRACO, ZHONG</>
+            )}
           </p>
 
           <div className="mt-4">

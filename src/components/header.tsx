@@ -1,12 +1,16 @@
 import React from "react";
-import { useAuth } from "../hooks/useAuth";
 import { useAppStore } from "../store/app-store";
 import { useNavigate } from "react-router-dom";
 
 export function Header() {
-  const { handleLogout } = useAuth();
+  const { setUser } = useAppStore();
   const { user } = useAppStore();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setUser(null);
+    navigate("/");
+  };
   return (
     <header className="flex items-center justify-between mb-4">
       <div>
@@ -17,7 +21,7 @@ export function Header() {
           <>
             <div className="text-sm text-gray-700">
               Signed in as{" "}
-              <span className="font-medium">{user?.username || "Kele"}</span>
+              <span className="font-medium">{user?.first_name || "User"}</span>
             </div>
             <button
               onClick={() => navigate("/dashboard")}
@@ -25,13 +29,14 @@ export function Header() {
             >
               Dashboard
             </button>
-
-            <button
-              onClick={() => navigate("/dashboard/admin")}
-              className="px-3 py-1 border rounded cursor-pointer"
-            >
-              Admin
-            </button>
+            {user?.role === "admin" && (
+              <button
+                onClick={() => navigate("/dashboard/admin")}
+                className="px-3 py-1 border rounded cursor-pointer"
+              >
+                Admin
+              </button>
+            )}
 
             <button
               onClick={handleLogout}

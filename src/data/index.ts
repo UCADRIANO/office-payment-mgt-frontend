@@ -2,18 +2,18 @@ import { User } from "../interfaces";
 
 const users: User[] = [
   {
-    id: "u_1",
-    username: "farouk",
-    password: "password123",
+    first_name: "farouk",
+    last_name: "obi",
+    army_number: "N/21343",
     role: "user",
-    allowedDBs: ["OPWS", "CHEC"],
+    allowed_dbs: ["OPWS", "CHEC"],
   },
   {
-    id: "u_2",
-    username: "kele",
-    password: "password456",
+    first_name: "kele",
+    last_name: "ayo",
+    army_number: "N/1234",
     role: "admin",
-    allowedDBs: ["SETRACO", "ZHONG"],
+    allowed_dbs: ["SETRACO", "ZHONG"],
   },
 ];
 

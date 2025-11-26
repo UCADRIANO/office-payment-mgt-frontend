@@ -1,4 +1,6 @@
 import axios, { AxiosError, type AxiosInstance } from "axios";
+import { toast } from "sonner";
+import { useAppStore } from "../store/app-store";
 
 export type StandardResponse<T> = {
   data: T;
@@ -8,7 +10,7 @@ export type StandardResponse<T> = {
 };
 
 const API_BASE_URL =
-  (import.meta as any).env.VITE_BASE_URL || "http://localhost:5000/api";
+  (import.meta as any).env.VITE_BASE_URL || "http://127.0.0.1:8080";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -21,6 +23,7 @@ export const errorHandler = (error: AxiosError<StandardResponse<any>>) => {
   // Check if the error is due to a network issue (e.g., no response received)
   if (!error.response) {
     console.error("Network Error:", error.message);
+    toast.error("Network error. Please check your internet connection.");
     return Promise.reject({
       message: "Network error. Please check your internet connection.",
       status: "NETWORK_ERROR",
@@ -47,6 +50,7 @@ export const errorHandler = (error: AxiosError<StandardResponse<any>>) => {
     ? errorResponse.data.message[0] // Show first error if message is an array
     : errorResponse?.data?.message || "An error occurred. Please try again.";
 
+  toast.error(errorMessage);
   console.error({ title: "Error", description: errorMessage });
 
   // Propagate the error for further handling if needed
@@ -55,6 +59,11 @@ export const errorHandler = (error: AxiosError<StandardResponse<any>>) => {
 
 api.interceptors.request.use(
   async (config) => {
+    const token = useAppStore.getState().token;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => errorHandler(error)
