@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Record } from "../interfaces";
-import { BANKS, RANKS } from "../data/constants";
+import { BANKS, RANKS, SUB_SECTORS } from "../data/constants";
 import { EmployeeFormSchema } from "../validations/user.validation";
 
 interface EmployeeFormProps {
@@ -60,7 +60,7 @@ export function EmployeeForm({
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Army Number *"
+              placeholder="Army Number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -79,7 +79,7 @@ export function EmployeeForm({
             <select {...field} className="border p-2 rounded w-full">
               {" "}
               // Full width
-              <option value="">Select rank</option>
+              <option value="">Select Rank</option>
               {RANKS.map((r) => (
                 <option key={r} value={r}>
                   {r}
@@ -94,14 +94,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">First name *</label>
+        <label className="block mb-1">First Name *</label>
         <Controller
           name="firstName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="First name *"
+              placeholder="First Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -112,14 +112,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Middle name</label>
+        <label className="block mb-1">Middle Name</label>
         <Controller
           name="middleName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Middle name"
+              placeholder="Middle Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -127,14 +127,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Last name *</label>
+        <label className="block mb-1">Last Name *</label>
         <Controller
           name="lastName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Last name *"
+              placeholder="Last Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -145,14 +145,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Phone number *</label>
+        <label className="block mb-1">Phone Number *</label>
         <Controller
           name="phoneNumber"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Phone number *"
+              placeholder="Phone Number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -169,7 +169,7 @@ export function EmployeeForm({
           control={control}
           render={({ field }) => (
             <select {...field} className="border p-2 rounded w-full">
-              <option value="">Select bank *</option>
+              <option value="">Select Bank</option>
               {BANKS.map((b) => (
                 <option key={b} value={b}>
                   {b}
@@ -184,14 +184,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Account number *</label>
+        <label className="block mb-1">Account Number *</label>
         <Controller
           name="accountNumber"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Account number *"
+              placeholder="Account number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -202,16 +202,19 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Sub sector *</label>
+        <label className="block mb-1">Sub Sector *</label>
         <Controller
           name="subSector"
           control={control}
           render={({ field }) => (
-            <input
-              {...field}
-              placeholder="Sub sector *"
-              className="border p-2 rounded w-full"
-            />
+            <select {...field} className="border p-2 rounded w-full">
+              <option value="">Select Sub-Sector</option>
+              {SUB_SECTORS.map((b) => (
+                <option key={b} value={b}>
+                  {b}
+                </option>
+              ))}
+            </select>
           )}
         />
         {errors.subSector && (
