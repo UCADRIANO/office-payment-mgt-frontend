@@ -4,7 +4,7 @@ export const userSchema = z.object({
   first_name: z.string().min(1, "First name is required"),
   last_name: z.string().min(1, "Last name is required"),
   army_number: z.string().min(1, "Army number is required"),
-  role: z.enum(["user", "admin"], "Role is required"),
+  role: z.enum(["user"], "Role is required"),
   allowed_dbs: z
     .array(z.string())
     .nonempty("At least one database must be selected"),
@@ -21,11 +21,16 @@ export const EmployeeFormSchema = (isEditing: boolean) =>
       middleName: z.string().optional(),
       lastName: z.string().nonempty("Last name is required"),
       phoneNumber: z.string().nonempty("Phone number is required"),
-      bankName: z.string().nonempty("Bank is required"),
+      bank: z.object({
+        name: z.string(),
+        sortCode: z.string(),
+      }),
       accountNumber: z.string().nonempty("Account number is required"),
       subSector: z.string().nonempty("Sub sector is required"),
       location: z.string().optional(),
       remark: z.string().optional(),
+      // customRank: z.string().optional(),
+      // customSubSector: z.string().optional(),
     })
     .partial()
     .refine((data) => {

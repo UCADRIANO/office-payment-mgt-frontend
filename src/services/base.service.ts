@@ -35,7 +35,9 @@ export const errorHandler = (error: AxiosError<StandardResponse<any>>) => {
 
   switch (errorResponse.status) {
     case 401:
-      console.warn("401 error");
+      window.location.href = "/";
+      useAppStore.getState().setUser(null);
+      console.error("401 error");
       break;
     case 400:
       console.error("Bad Request:", errorResponse?.data?.message);

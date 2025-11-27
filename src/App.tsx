@@ -1,11 +1,11 @@
 import React from "react";
-import { Header } from "./components/header";
-import { DashboardPage } from "./pages/dashboard";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "./pages/login";
 import { AdminPage } from "./pages/admin";
 import { DatabasePage } from "./pages/database";
 import { Toaster } from "./components/ui/sonner";
+import { DashboardPage } from "./pages/dashboard";
+import { Header } from "./components/header";
 
 function PayrollApp() {
   return (

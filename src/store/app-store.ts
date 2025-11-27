@@ -1,15 +1,14 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { User } from "../interfaces";
-import { DB_NAMES } from "../data/constants";
+import { Db, User } from "../interfaces";
 
 interface AppStore {
   user: User | null;
   token: string | null;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
-  selectedDB: string;
-  setSelectedDB: (db: string) => void;
+  dbs: Db[];
+  setDbs: (dbs: Db[]) => void;
 }
 
 export const useAppStore = create<AppStore>()(
@@ -19,8 +18,8 @@ export const useAppStore = create<AppStore>()(
       token: null,
       setUser: (user) => set({ user }),
       setToken: (token) => set({ token }),
-      selectedDB: DB_NAMES[0],
-      setSelectedDB: (selectedDB) => set({ selectedDB }),
+      dbs: [],
+      setDbs: (dbs) => set({ dbs }),
     }),
     {
       name: "app-storage",

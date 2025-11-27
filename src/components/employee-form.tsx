@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Record } from "../interfaces";
-import { BANKS, RANKS } from "../data/constants";
+import { BANKS, RANKS, SUB_SECTORS } from "../data/constants";
 import { EmployeeFormSchema } from "../validations/user.validation";
 
 interface EmployeeFormProps {
@@ -18,6 +18,9 @@ export function EmployeeForm({
   onCancel,
   onSubmit,
 }: EmployeeFormProps) {
+  const [rankIsCustom, setRankIsCustom] = useState(false);
+  const [subSectorIsCustom, setSubSectorIsCustom] = useState(false);
+
   const {
     control,
     handleSubmit,
@@ -32,11 +35,16 @@ export function EmployeeForm({
       middleName: "",
       lastName: "",
       phoneNumber: "",
-      bankName: "",
+      bank: {
+        name: "",
+        sortCode: "",
+      },
       accountNumber: "",
       subSector: "",
       location: "",
       remark: "",
+      customRank: "",
+      customSubSector: "",
       ...initialData,
     },
   });
@@ -60,7 +68,7 @@ export function EmployeeForm({
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Army Number *"
+              placeholder="Army Number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -70,38 +78,69 @@ export function EmployeeForm({
         )}
       </div>
 
-      <div>
-        <label className="block mb-1">Rank *</label>
-        <Controller
-          name="rank"
-          control={control}
-          render={({ field }) => (
-            <select {...field} className="border p-2 rounded w-full">
-              {" "}
-              // Full width
-              <option value="">Select rank</option>
-              {RANKS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          )}
-        />
-        {errors.rank && (
-          <p className="text-red-500 text-sm">{errors.rank.message}</p>
+      <Controller
+        name="rank"
+        control={control}
+        render={({ field }) => (
+          <div>
+            <label className="block mb-1">Rank *</label>
+
+            {rankIsCustom ? (
+              <input
+                className="border p-2 rounded w-full"
+                placeholder="Enter rank"
+                value={field.value || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  field.onChange(val);
+
+                  if (val === "") {
+                    setRankIsCustom(false);
+                  }
+                }}
+              />
+            ) : (
+              <select
+                className="border p-2 rounded w-full"
+                value={field.value || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+
+                  if (val === "Others") {
+                    setRankIsCustom(true);
+                    field.onChange("");
+                    return;
+                  }
+
+                  field.onChange(val);
+                }}
+              >
+                <option value="">Select Rank</option>
+
+                {RANKS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {errors.rank && (
+              <p className="text-red-500 text-sm">{errors.rank.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
 
       <div>
-        <label className="block mb-1">First name *</label>
+        <label className="block mb-1">First Name *</label>
         <Controller
           name="firstName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="First name *"
+              placeholder="First Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -112,14 +151,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Middle name</label>
+        <label className="block mb-1">Middle Name</label>
         <Controller
           name="middleName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Middle name"
+              placeholder="Middle Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -127,14 +166,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Last name *</label>
+        <label className="block mb-1">Last Name *</label>
         <Controller
           name="lastName"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Last name *"
+              placeholder="Last Name"
               className="border p-2 rounded w-full"
             />
           )}
@@ -145,14 +184,14 @@ export function EmployeeForm({
       </div>
 
       <div>
-        <label className="block mb-1">Phone number *</label>
+        <label className="block mb-1">Phone Number *</label>
         <Controller
           name="phoneNumber"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Phone number *"
+              placeholder="Phone Number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -165,33 +204,44 @@ export function EmployeeForm({
       <div>
         <label className="block mb-1">Bank *</label>
         <Controller
-          name="bankName"
+          name="bank"
           control={control}
           render={({ field }) => (
-            <select {...field} className="border p-2 rounded w-full">
-              <option value="">Select bank *</option>
+            <select
+              onChange={(e) => {
+                const selected = BANKS.find((b) => b.name === e.target.value);
+                field.onChange(
+                  selected
+                    ? { name: selected.name, sortCode: selected.sortCode }
+                    : null
+                );
+              }}
+              value={field.value?.name || ""}
+              className="border p-2 rounded w-full"
+            >
+              <option value="">Select Bank</option>
               {BANKS.map((b) => (
-                <option key={b} value={b}>
-                  {b}
+                <option key={b.sortCode} value={b.name}>
+                  {b.name}
                 </option>
               ))}
             </select>
           )}
         />
-        {errors.bankName && (
-          <p className="text-red-500 text-sm">{errors.bankName.message}</p>
+        {errors.bank && (
+          <p className="text-red-500 text-sm">{errors.bank.message}</p>
         )}
       </div>
 
       <div>
-        <label className="block mb-1">Account number *</label>
+        <label className="block mb-1">Account Number *</label>
         <Controller
           name="accountNumber"
           control={control}
           render={({ field }) => (
             <input
               {...field}
-              placeholder="Account number *"
+              placeholder="Account number"
               className="border p-2 rounded w-full"
             />
           )}
@@ -201,23 +251,59 @@ export function EmployeeForm({
         )}
       </div>
 
-      <div>
-        <label className="block mb-1">Sub sector *</label>
-        <Controller
-          name="subSector"
-          control={control}
-          render={({ field }) => (
-            <input
-              {...field}
-              placeholder="Sub sector *"
-              className="border p-2 rounded w-full"
-            />
-          )}
-        />
-        {errors.subSector && (
-          <p className="text-red-500 text-sm">{errors.subSector.message}</p>
+      <Controller
+        name="subSector"
+        control={control}
+        render={({ field }) => (
+          <div>
+            <label className="block mb-1">Sub Sector *</label>
+
+            {subSectorIsCustom ? (
+              <input
+                className="border p-2 rounded w-full"
+                placeholder="Enter sub sector"
+                value={field.value || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  field.onChange(val);
+
+                  if (val === "") {
+                    setSubSectorIsCustom(false);
+                  }
+                }}
+              />
+            ) : (
+              <select
+                className="border p-2 rounded w-full"
+                value={field.value || ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+
+                  if (val === "Others") {
+                    setSubSectorIsCustom(true);
+                    field.onChange("");
+                    return;
+                  }
+
+                  field.onChange(val);
+                }}
+              >
+                <option value="">Select Sub Sector</option>
+
+                {SUB_SECTORS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {errors.subSector && (
+              <p className="text-red-500 text-sm">{errors.subSector.message}</p>
+            )}
+          </div>
         )}
-      </div>
+      />
 
       <div>
         <label className="block mb-1">Location (optional)</label>

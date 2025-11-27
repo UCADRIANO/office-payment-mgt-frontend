@@ -4,6 +4,7 @@ export interface User {
   last_name: string;
   role: "admin" | "user";
   allowed_dbs: string[];
+  id: string;
 }
 
 export interface Record {
@@ -14,13 +15,18 @@ export interface Record {
   middleName?: string;
   lastName: string;
   phoneNumber: string;
-  bankName: string;
+  bank: {
+    name: string;
+    sortCode: string;
+  };
   accountNumber: string;
   subSector: string;
   location?: string;
   remark?: string;
   createdAt?: string;
   updatedAt?: string;
+  customRank?: string;
+  customSubSector?: string;
 }
 
 export interface LoginCredentials {
@@ -38,3 +44,16 @@ export interface CreateUserData {
 }
 
 export type ViewType = "login" | "dashboard" | "admin-users" | "db";
+
+export interface CreateDb {
+  name: string;
+  short_code: string;
+  description: string;
+}
+
+export interface Db {
+  id: string;
+  name: string;
+  description: string;
+  short_code: string;
+}

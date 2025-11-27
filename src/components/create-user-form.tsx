@@ -1,32 +1,36 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DB_NAMES } from "../data/constants";
 import {
   CreateUserSchemaType,
   userSchema,
 } from "../validations/user.validation";
 import { toast } from "sonner";
-import {
-  QueryClient,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { createUser, editUser } from "../services/admin.service";
 import { Button } from "../components/ui/button";
+import { ShowPasswordModal } from "./show-password-modal";
+import { useAppStore } from "../store/app-store";
+import { queryClient } from "../main";
 
 interface CreateUserFormProps {
-  userToEdit?: Partial<CreateUserSchemaType> & { army_number: string };
+  userToEdit?: Partial<CreateUserSchemaType> & {
+    army_number: string;
+    id: string;
+  };
   onCancel?: () => void;
 }
 
 export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const { dbs } = useAppStore();
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
-    getValues,
     trigger,
     formState: { errors },
   } = useForm<CreateUserSchemaType>({
@@ -38,14 +42,14 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
     },
   });
 
-  const queryClient = useQueryClient();
-
   useEffect(() => {
     if (userToEdit) {
       Object.entries(userToEdit).forEach(([key, value]) => {
         setValue(key as any, value);
       });
+      setGeneratedPassword("");
     } else {
+      setGeneratedPassword("");
       reset();
     }
   }, [userToEdit, setValue, reset]);
@@ -56,168 +60,191 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
       toast.success(response?.data.message);
       queryClient.invalidateQueries({ queryKey: ["users"] });
       reset();
+      setShowPasswordModal(true);
     },
   });
 
   const { mutate: editUserMutation, isPending: isEditingUser } = useMutation({
-    mutationFn: editUser,
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<CreateUserSchemaType>;
+    }) => editUser(id, data),
     onSuccess: (response) => {
-      //  console.log("login res:", response?.data.data);
+      queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success(response?.data.message);
     },
   });
 
   const onCreate = (data: CreateUserSchemaType) => {
     if (userToEdit) {
-      editUserMutation(data);
+      editUserMutation({ id: userToEdit.id!, data });
     } else {
       mutate(data);
     }
   };
 
-  const handleCheckboxChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { value, checked } = e.target;
-    const currentValues = getValues("allowed_dbs") || [];
-
-    if (checked) {
-      setValue("allowed_dbs", [...currentValues, value]);
-    } else {
-      setValue(
-        "allowed_dbs",
-        currentValues.filter((d) => d !== value)
-      );
+  const generatePassword = () => {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let pass = "";
+    for (let i = 0; i < 6; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-
-    await trigger("allowed_dbs");
+    setGeneratedPassword(pass);
+    setValue("password", pass);
+    trigger("password");
   };
-
   return (
-    <form
-      onSubmit={handleSubmit(onCreate)}
-      className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3"
-    >
-      <div className="flex flex-col">
-        <label htmlFor="first_name" className="mb-1 font-medium">
-          First name
-        </label>
-        <input
-          id="first_name"
-          {...register("first_name")}
-          placeholder="Enter first name"
-          className="border p-2 rounded w-full"
-        />
-        {errors.first_name && (
-          <p className="text-red-500 text-sm">{errors.first_name.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <label htmlFor="last_name" className="mb-1 font-medium">
-          Last name
-        </label>
-        <input
-          id="last_name"
-          {...register("last_name")}
-          placeholder="Enter last name"
-          className="border p-2 rounded w-full"
-        />
-        {errors.last_name && (
-          <p className="text-red-500 text-sm">{errors.last_name.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <label htmlFor="army_number" className="mb-1 font-medium">
-          Army number
-        </label>
-        <input
-          id="army_number"
-          {...register("army_number")}
-          placeholder="Enter army number"
-          className="border p-2 rounded w-full"
-        />
-        {errors.army_number && (
-          <p className="text-red-500 text-sm">{errors.army_number.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <label htmlFor="password" className="mb-1 font-medium">
-          Password
-        </label>
-        <input
-          id="password"
-          {...register("password")}
-          placeholder="Enter your password"
-          type="password"
-          className="border p-2 rounded w-full"
-        />
-        {errors.password && (
-          <p className="text-red-500 text-sm">{errors.password.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <label htmlFor="role" className="mb-1 font-medium">
-          Role
-        </label>
-        <select
-          id="role"
-          {...register("role")}
-          className="border p-2 rounded w-full"
-        >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-        {errors.role && (
-          <p className="text-red-500 text-sm">{errors.role.message}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col">
-        <label className="mb-1 font-medium">Allowed DBs</label>
-        <div className="border p-2 rounded w-full">
-          <div className="grid grid-cols-2 gap-1">
-            {DB_NAMES.map((d) => (
-              <label key={d} className="text-sm">
-                <input
-                  type="checkbox"
-                  value={d}
-                  onChange={handleCheckboxChange}
-                />{" "}
-                <span className="ml-2">{d}</span>
-              </label>
-            ))}
-          </div>
+    <>
+      <form
+        onSubmit={handleSubmit(onCreate)}
+        className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3"
+      >
+        <div className="flex flex-col">
+          <label htmlFor="first_name" className="mb-1 font-medium">
+            First name
+          </label>
+          <input
+            id="first_name"
+            {...register("first_name")}
+            placeholder="Enter first name"
+            className="border p-2 rounded w-full"
+          />
+          {errors.first_name && (
+            <p className="text-red-500 text-sm">{errors.first_name.message}</p>
+          )}
         </div>
-        {errors.allowed_dbs && (
-          <p className="text-red-500 text-sm">{errors.allowed_dbs.message}</p>
-        )}
-      </div>
 
-      <div className="flex gap-10 md:col-span-2">
-        <Button
-          type="submit"
-          isLoading={isPending || isEditingUser}
-          className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer"
-        >
-          {userToEdit ? "Update user" : "Create user"}
-        </Button>
-        {userToEdit && (
-          <Button
-            type="button"
-            onClick={() => {
-              reset();
-              onCancel?.();
-            }}
-            className="px-4 py-2 border rounded cursor-pointer"
+        <div className="flex flex-col">
+          <label htmlFor="last_name" className="mb-1 font-medium">
+            Last name
+          </label>
+          <input
+            id="last_name"
+            {...register("last_name")}
+            placeholder="Enter last name"
+            className="border p-2 rounded w-full"
+          />
+          {errors.last_name && (
+            <p className="text-red-500 text-sm">{errors.last_name.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="army_number" className="mb-1 font-medium">
+            Army number
+          </label>
+          <input
+            id="army_number"
+            {...register("army_number")}
+            placeholder="Enter army number"
+            className="border p-2 rounded w-full"
+          />
+          {errors.army_number && (
+            <p className="text-red-500 text-sm">{errors.army_number.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="password" className="mb-1 font-medium">
+            Password
+          </label>
+          <input
+            id="password"
+            {...register("password")}
+            placeholder="Enter your password"
+            type="text"
+            className="border p-2 rounded w-full"
+            readOnly
+          />
+          {!userToEdit && (
+            <button
+              type="button"
+              onClick={generatePassword}
+              className="text-blue-600 underline text-sm cursor-pointer"
+            >
+              Generate password
+            </button>
+          )}
+          {errors.password && (
+            <p className="text-red-500 text-sm">{errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <label htmlFor="role" className="mb-1 font-medium">
+            Role
+          </label>
+          <select
+            id="role"
+            {...register("role")}
+            className="border p-2 rounded w-full"
           >
-            Cancel
+            <option value="user">User</option>
+          </select>
+          {errors.role && (
+            <p className="text-red-500 text-sm">{errors.role.message}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col">
+          <label className="mb-1 font-medium">Allowed DBs</label>
+          <div className="border p-2 rounded w-full">
+            <div className="grid grid-cols-2 gap-1">
+              {dbs.length > 0 ? (
+                dbs.map((d) => (
+                  <label key={d?.id} className="text-sm">
+                    <input
+                      type="checkbox"
+                      value={d?.short_code}
+                      {...register("allowed_dbs")}
+                    />{" "}
+                    <span className="ml-2">{d?.short_code}</span>
+                  </label>
+                ))
+              ) : (
+                <div className="text-sm">Empty DB, please add one!</div>
+              )}
+            </div>
+          </div>
+          {errors.allowed_dbs && (
+            <p className="text-red-500 text-sm">{errors.allowed_dbs.message}</p>
+          )}
+        </div>
+
+        <div className="flex gap-10 md:col-span-2">
+          <Button
+            type="submit"
+            isLoading={isPending || isEditingUser}
+            className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer"
+          >
+            {userToEdit ? "Update user" : "Create user"}
           </Button>
-        )}
-      </div>
-    </form>
+          {userToEdit && (
+            <Button
+              type="button"
+              onClick={() => {
+                reset();
+                setGeneratedPassword("");
+                setShowPasswordModal(false);
+                onCancel?.();
+              }}
+              className="px-4 py-2 border rounded cursor-pointer"
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      </form>
+      {showPasswordModal && (
+        <ShowPasswordModal
+          password={generatedPassword}
+          onClose={() => setShowPasswordModal(false)}
+        />
+      )}
+    </>
   );
 }

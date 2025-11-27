@@ -14,7 +14,7 @@ export function EmployeeTable({
 }: EmployeeTableProps) {
   const [filter, setFilter] = useState("");
   const filtered = records.filter((r) =>
-    [r.armyNumber, r.firstName, r.lastName, r.rank, r.subSector, r.bankName]
+    [r.armyNumber, r.firstName, r.lastName, r.rank, r.subSector, r.bank]
       .join(" ")
       .toLowerCase()
       .includes(filter.toLowerCase())
@@ -53,7 +53,7 @@ export function EmployeeTable({
                   {r.firstName} {r.middleName} {r.lastName}
                 </td>
                 <td className="p-2 border">{r.phoneNumber}</td>
-                <td className="p-2 border">{r.bankName}</td>
+                <td className="p-2 border">{r.bank.name}</td>
                 <td className="p-2 border">{r.accountNumber}</td>
                 <td className="p-2 border">{r.subSector}</td>
                 <td className="p-2 border">

@@ -20,7 +20,10 @@ export function DatabasePage() {
       middleName: "K.",
       lastName: "Doe",
       phoneNumber: "123-456-7890",
-      bankName: "Zenith Bank",
+      bank: {
+        name: "Zenith Bank",
+        sortCode: "04133",
+      },
       accountNumber: "00123456789",
       subSector: "Infantry",
     },
@@ -32,7 +35,10 @@ export function DatabasePage() {
       middleName: "M.",
       lastName: "Smith",
       phoneNumber: "098-765-4321",
-      bankName: "First Bank",
+      bank: {
+        name: "First Bank",
+        sortCode: "04136",
+      },
       accountNumber: "00987654321",
       subSector: "Logistics",
     },
@@ -44,8 +50,9 @@ export function DatabasePage() {
 
   const handleFormSubmit = async (data: Partial<Record>) => {
     if (formMode === "add") {
-      console.log(data);
-    } else if (formData) {
+      console.log("create new record:", data);
+      console.log("formData on create:", formData);
+    } else if (formData && formMode === "edit") {
       console.log(formData);
       console.log(data);
     }
@@ -79,9 +86,9 @@ export function DatabasePage() {
       <div className="mt-4">
         <EmployeeTable
           records={mockRecords}
-          onEdit={(r) => {
+          onEdit={(dataToEdit) => {
             setFormMode("edit");
-            setFormData(r);
+            setFormData(dataToEdit);
             setShowForm(true);
           }}
           onDelete={(id) => console.log(`Delete record with id: ${id}`)}

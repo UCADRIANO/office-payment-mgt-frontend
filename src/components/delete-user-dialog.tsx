@@ -6,7 +6,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { User } from "../interfaces";
@@ -15,19 +14,17 @@ export function DeleteUserDialog({
   onConfirm,
   isPending,
   user,
+  isOpen,
+  onCancel,
 }: {
   onConfirm: () => void;
   isPending: boolean;
   user: User;
+  isOpen: boolean;
+  onCancel: () => void;
 }) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <button className="px-2 py-1 border rounded text-red-600 cursor-pointer">
-          Delete
-        </button>
-      </DialogTrigger>
-
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="bg-white">
         <DialogHeader>
           <DialogTitle>Confirm Delete</DialogTitle>

@@ -25,7 +25,6 @@ export function LoginPage() {
     mutationFn: login,
     onSuccess: (response) => {
       const { token, user } = response?.data.data;
-      //  console.log("login res:", response?.data.data);
       toast.success(response?.data.message);
 
       setToken(token);
