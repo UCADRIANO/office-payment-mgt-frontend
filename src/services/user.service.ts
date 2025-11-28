@@ -23,7 +23,7 @@ export const editPersonnel = async (
   return await api.patch(`/personnels/${id}`, personnel);
 };
 
-export const deletePersonnel = async (id: string): Promise<void> => {
+export const deletePersonnel = async (id: string) => {
   return await api.delete(`/personnels/${id}`);
 };
 
