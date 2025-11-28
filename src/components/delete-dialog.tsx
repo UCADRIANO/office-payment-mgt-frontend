@@ -8,18 +8,17 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { User } from "../interfaces";
 
-export function DeleteUserDialog({
+export function DeleteDialog({
   onConfirm,
   isPending,
-  user,
+  name,
   isOpen,
   onCancel,
 }: {
   onConfirm: () => void;
   isPending: boolean;
-  user: User;
+  name: string;
   isOpen: boolean;
   onCancel: () => void;
 }) {
@@ -31,7 +30,7 @@ export function DeleteUserDialog({
         </DialogHeader>
 
         <p className="text-sm capitalize">
-          Are you sure you want to delete {user?.first_name}?
+          Are you sure you want to delete {name}?
         </p>
 
         <DialogFooter>

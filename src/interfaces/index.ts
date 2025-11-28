@@ -7,26 +7,24 @@ export interface User {
   id: string;
 }
 
-export interface Record {
+export interface Personnel {
   id: string;
-  armyNumber: string;
+  army_number: string;
   rank: string;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  phoneNumber: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  phone_number: string;
   bank: {
     name: string;
-    sortCode: string;
+    sort_code: string;
   };
-  accountNumber: string;
-  subSector: string;
+  acct_number: string;
+  sub_sector: string;
   location?: string;
   remark?: string;
   createdAt?: string;
   updatedAt?: string;
-  customRank?: string;
-  customSubSector?: string;
 }
 
 export interface LoginCredentials {

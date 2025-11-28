@@ -1,69 +1,90 @@
 import React, { useRef, useState } from "react";
-import { Record } from "../interfaces";
+import { Personnel } from "../interfaces";
 import { EmployeeTable } from "../components/employee-table";
 import { EmployeeForm } from "../components/employee-form";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  createPersonnel,
+  deletePersonnel,
+  editPersonnel,
+  getPersonnels,
+} from "../services/user.service";
+import { toast } from "sonner";
+import { queryClient } from "../main";
+import { Button } from "../components/ui/button";
+import { DeleteDialog } from "../components/delete-dialog";
 
 export function DatabasePage() {
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
-  const [formData, setFormData] = useState<Record | null>(null);
+  const [formData, setFormData] = useState<Personnel | null>(null);
+  const [personnelToDelete, setPersonnelToDelete] = useState<Personnel>();
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
+  const location = useLocation();
 
-  const mockRecords: Record[] = [
-    {
-      id: "1",
-      armyNumber: "12345",
-      rank: "Corporal",
-      firstName: "John",
-      middleName: "K.",
-      lastName: "Doe",
-      phoneNumber: "123-456-7890",
-      bank: {
-        name: "Zenith Bank",
-        sortCode: "04133",
-      },
-      accountNumber: "00123456789",
-      subSector: "Infantry",
-    },
-    {
-      id: "2",
-      armyNumber: "67890",
-      rank: "Private",
-      firstName: "Jane",
-      middleName: "M.",
-      lastName: "Smith",
-      phoneNumber: "098-765-4321",
-      bank: {
-        name: "First Bank",
-        sortCode: "04136",
-      },
-      accountNumber: "00987654321",
-      subSector: "Logistics",
-    },
-  ];
+  const { data: personnel = [] } = useQuery<Personnel[]>({
+    queryKey: ["personnels"],
+    queryFn: () => getPersonnels(id as string),
+  });
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleFormSubmit = async (data: Partial<Record>) => {
+  const { mutate, isPending } = useMutation({
+    mutationFn: createPersonnel,
+    onSuccess: (response) => {
+      toast.success(response?.data.message);
+      queryClient.invalidateQueries({ queryKey: ["personnels"] });
+      setShowForm(false);
+      setFormData(null);
+    },
+  });
+
+  const { mutate: editPersonnels, isPending: isEditingPersonnel } = useMutation(
+    {
+      mutationFn: ({
+        id,
+        personnel,
+      }: {
+        id: string;
+        personnel: Partial<Personnel>;
+      }) => editPersonnel(id, personnel),
+      onSuccess: (response) => {
+        toast.success(response?.data.message);
+        queryClient.invalidateQueries({ queryKey: ["personnels"] });
+        setShowForm(false);
+        setFormData(null);
+      },
+    }
+  );
+
+  const { mutate: deletePersonnelMutation, isPending: isDeleteingPersonnel } =
+    useMutation({
+      mutationFn: deletePersonnel,
+      onSuccess: (response) => {
+        toast.success(response?.data?.message);
+        setPersonnelToDelete(undefined);
+        queryClient.invalidateQueries({ queryKey: ["personnels"] });
+      },
+    });
+
+  const handleFormSubmit = async (data: Partial<Personnel>) => {
     if (formMode === "add") {
-      console.log("create new record:", data);
-      console.log("formData on create:", formData);
+      mutate({ ...data, db_id: id as string });
     } else if (formData && formMode === "edit") {
-      console.log(formData);
-      console.log(data);
+      editPersonnels({ id: formData.id, personnel: data });
     }
   };
 
   return (
     <div className="bg-white p-4 rounded shadow mt-4" ref={printableRef}>
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">DB: {id}</h2>
+        <h2 className="text-xl font-semibold">DB: {location.state?.dbName}</h2>
         <div className="flex gap-2">
-          <button
+          <Button
             onClick={() => {
               setFormMode("add");
               setFormData(null);
@@ -72,26 +93,23 @@ export function DatabasePage() {
             className="px-3 py-1 border rounded"
           >
             Add Record
-          </button>
-          <button className="px-3 py-1 border rounded">
-            {/* Export CSV button can be added later */}
-            Export CSV
-          </button>
-          <button onClick={handlePrint} className="px-3 py-1 border rounded">
+          </Button>
+          <Button className="px-3 py-1 border rounded">Export CSV</Button>
+          <Button onClick={handlePrint} className="px-3 py-1 border rounded">
             Print
-          </button>
+          </Button>
         </div>
       </div>
 
       <div className="mt-4">
         <EmployeeTable
-          records={mockRecords}
+          personnel={personnel}
           onEdit={(dataToEdit) => {
             setFormMode("edit");
             setFormData(dataToEdit);
             setShowForm(true);
           }}
-          onDelete={(id) => console.log(`Delete record with id: ${id}`)}
+          onDelete={(personnel) => setPersonnelToDelete(personnel)}
         />
       </div>
 
@@ -106,10 +124,21 @@ export function DatabasePage() {
               initialData={formData}
               onCancel={() => setShowForm(false)}
               onSubmit={handleFormSubmit}
+              isPending={isPending || isEditingPersonnel}
             />
           </div>
         </div>
       )}
+
+      <DeleteDialog
+        name={personnelToDelete?.first_name!}
+        isOpen={!!personnelToDelete}
+        onConfirm={() => {
+          deletePersonnelMutation(personnelToDelete?.id!);
+        }}
+        onCancel={() => setPersonnelToDelete(undefined)}
+        isPending={isDeleteingPersonnel}
+      />
     </div>
   );
 }

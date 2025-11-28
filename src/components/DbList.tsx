@@ -5,8 +5,8 @@ import { queryClient } from "../main";
 import { toast } from "sonner";
 import React, { useEffect, useState } from "react";
 import { Db } from "../interfaces";
-import { DeleteDbDialog } from "./delete-db-dialog";
 import { Button } from "./ui/button";
+import { DeleteDialog } from "./delete-dialog";
 
 export function DbList({ setEditingDb }) {
   const setDbs = useAppStore((s) => s.setDbs);
@@ -76,16 +76,16 @@ export function DbList({ setEditingDb }) {
           </div>
         ))}
       </div>
-      {dbToDelete && (
-        <DeleteDbDialog
-          db={dbToDelete}
-          onCancel={() => setDbToDelete(null)}
-          onConfirm={() => {
-            deleteDbMutate(dbToDelete?.id!);
-            setDbToDelete(null);
-          }}
-        />
-      )}
+      <DeleteDialog
+        name={dbToDelete?.name!}
+        isOpen={!!dbToDelete}
+        onConfirm={() => {
+          deleteDbMutate(dbToDelete?.id!);
+          setDbToDelete(null);
+        }}
+        onCancel={() => setDbToDelete(null)}
+        isPending={isPending}
+      />
     </div>
   );
 }

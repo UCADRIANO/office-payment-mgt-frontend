@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Record } from "../interfaces";
+import { Personnel } from "../interfaces";
 import { BANKS, RANKS, SUB_SECTORS } from "../data/constants";
 import { EmployeeFormSchema } from "../validations/user.validation";
+import { Button } from "./ui/button";
 
 interface EmployeeFormProps {
   mode?: "add" | "edit";
-  initialData?: Record | null;
+  initialData?: Personnel | null;
   onCancel: () => void;
-  onSubmit: (data: Partial<Record>) => Promise<void>;
+  onSubmit: (data: Partial<Personnel>) => Promise<void>;
+  isPending: boolean;
 }
 
 export function EmployeeForm({
@@ -17,6 +19,7 @@ export function EmployeeForm({
   initialData = null,
   onCancel,
   onSubmit,
+  isPending,
 }: EmployeeFormProps) {
   const [rankIsCustom, setRankIsCustom] = useState(false);
   const [subSectorIsCustom, setSubSectorIsCustom] = useState(false);
@@ -26,25 +29,23 @@ export function EmployeeForm({
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<Partial<Record>>({
+  } = useForm<Partial<Personnel>>({
     resolver: zodResolver(EmployeeFormSchema(mode === "edit")),
     defaultValues: {
-      armyNumber: "",
+      army_number: "",
       rank: "",
-      firstName: "",
-      middleName: "",
-      lastName: "",
-      phoneNumber: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      phone_number: "",
       bank: {
         name: "",
-        sortCode: "",
+        sort_code: "",
       },
-      accountNumber: "",
-      subSector: "",
+      acct_number: "",
+      sub_sector: "",
       location: "",
       remark: "",
-      customRank: "",
-      customSubSector: "",
       ...initialData,
     },
   });
@@ -63,7 +64,7 @@ export function EmployeeForm({
       <div>
         <label className="block mb-1">Army Number *</label>
         <Controller
-          name="armyNumber"
+          name="army_number"
           control={control}
           render={({ field }) => (
             <input
@@ -73,8 +74,8 @@ export function EmployeeForm({
             />
           )}
         />
-        {errors.armyNumber && (
-          <p className="text-red-500 text-sm">{errors.armyNumber.message}</p>
+        {errors.army_number && (
+          <p className="text-red-500 text-sm">{errors.army_number.message}</p>
         )}
       </div>
 
@@ -135,7 +136,7 @@ export function EmployeeForm({
       <div>
         <label className="block mb-1">First Name *</label>
         <Controller
-          name="firstName"
+          name="first_name"
           control={control}
           render={({ field }) => (
             <input
@@ -145,15 +146,15 @@ export function EmployeeForm({
             />
           )}
         />
-        {errors.firstName && (
-          <p className="text-red-500 text-sm">{errors.firstName.message}</p>
+        {errors.first_name && (
+          <p className="text-red-500 text-sm">{errors.first_name.message}</p>
         )}
       </div>
 
       <div>
         <label className="block mb-1">Middle Name</label>
         <Controller
-          name="middleName"
+          name="middle_name"
           control={control}
           render={({ field }) => (
             <input
@@ -163,12 +164,15 @@ export function EmployeeForm({
             />
           )}
         />
+        {/* {errors.middle_name && (
+          <p className="text-red-500 text-sm">{errors.middle_name.message}</p>
+        )} */}
       </div>
 
       <div>
         <label className="block mb-1">Last Name *</label>
         <Controller
-          name="lastName"
+          name="last_name"
           control={control}
           render={({ field }) => (
             <input
@@ -178,15 +182,15 @@ export function EmployeeForm({
             />
           )}
         />
-        {errors.lastName && (
-          <p className="text-red-500 text-sm">{errors.lastName.message}</p>
+        {errors.last_name && (
+          <p className="text-red-500 text-sm">{errors.last_name.message}</p>
         )}
       </div>
 
       <div>
         <label className="block mb-1">Phone Number *</label>
         <Controller
-          name="phoneNumber"
+          name="phone_number"
           control={control}
           render={({ field }) => (
             <input
@@ -196,8 +200,8 @@ export function EmployeeForm({
             />
           )}
         />
-        {errors.phoneNumber && (
-          <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>
+        {errors.phone_number && (
+          <p className="text-red-500 text-sm">{errors.phone_number.message}</p>
         )}
       </div>
 
@@ -212,7 +216,7 @@ export function EmployeeForm({
                 const selected = BANKS.find((b) => b.name === e.target.value);
                 field.onChange(
                   selected
-                    ? { name: selected.name, sortCode: selected.sortCode }
+                    ? { name: selected.name, sort_code: selected.sortCode }
                     : null
                 );
               }}
@@ -236,7 +240,7 @@ export function EmployeeForm({
       <div>
         <label className="block mb-1">Account Number *</label>
         <Controller
-          name="accountNumber"
+          name="acct_number"
           control={control}
           render={({ field }) => (
             <input
@@ -246,13 +250,13 @@ export function EmployeeForm({
             />
           )}
         />
-        {errors.accountNumber && (
-          <p className="text-red-500 text-sm">{errors.accountNumber.message}</p>
+        {errors.acct_number && (
+          <p className="text-red-500 text-sm">{errors.acct_number.message}</p>
         )}
       </div>
 
       <Controller
-        name="subSector"
+        name="sub_sector"
         control={control}
         render={({ field }) => (
           <div>
@@ -298,8 +302,10 @@ export function EmployeeForm({
               </select>
             )}
 
-            {errors.subSector && (
-              <p className="text-red-500 text-sm">{errors.subSector.message}</p>
+            {errors.sub_sector && (
+              <p className="text-red-500 text-sm">
+                {errors.sub_sector.message}
+              </p>
             )}
           </div>
         )}
@@ -336,19 +342,21 @@ export function EmployeeForm({
       </div>
 
       <div className="md:col-span-2 flex gap-2">
-        <button
+        <Button
           type="submit"
           className="px-4 py-2 bg-green-600 text-white rounded cursor-pointer"
+          isLoading={isPending}
+          disabled={isPending}
         >
           {mode === "add" ? "Add" : "Update"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={onCancel}
           className="px-4 py-2 border rounded cursor-pointer"
         >
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

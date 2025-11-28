@@ -27,7 +27,13 @@ export function DashboardPage() {
             dbs.map((db) => (
               <button
                 key={db?.id}
-                onClick={() => navigate(`/dashboard/db/${db}`)}
+                onClick={() =>
+                  navigate(`/dashboard/db/${db?.id}`, {
+                    state: {
+                      dbName: db?.name,
+                    },
+                  })
+                }
                 className="cursor-pointer w-full text-left p-2 rounded hover:bg-gray-50"
               >
                 {db?.short_code}

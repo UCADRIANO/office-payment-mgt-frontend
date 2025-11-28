@@ -15,22 +15,20 @@ export type CreateUserSchemaType = z.infer<typeof userSchema>;
 export const EmployeeFormSchema = (isEditing: boolean) =>
   z
     .object({
-      armyNumber: z.string().nonempty("Army Number is required"),
+      army_number: z.string().nonempty("Army Number is required"),
       rank: z.string().nonempty("Rank is required"),
-      firstName: z.string().nonempty("First name is required"),
-      middleName: z.string().optional(),
-      lastName: z.string().nonempty("Last name is required"),
-      phoneNumber: z.string().nonempty("Phone number is required"),
+      first_name: z.string().nonempty("First name is required"),
+      middle_name: z.string().optional(),
+      last_name: z.string().nonempty("Last name is required"),
+      phone_number: z.string().nonempty("Phone number is required"),
       bank: z.object({
         name: z.string(),
-        sortCode: z.string(),
+        sort_code: z.string(),
       }),
-      accountNumber: z.string().nonempty("Account number is required"),
-      subSector: z.string().nonempty("Sub sector is required"),
+      acct_number: z.string().nonempty("Account number is required"),
+      sub_sector: z.string().nonempty("Sub sector is required"),
       location: z.string().optional(),
       remark: z.string().optional(),
-      // customRank: z.string().optional(),
-      // customSubSector: z.string().optional(),
     })
     .partial()
     .refine((data) => {

@@ -3,7 +3,7 @@ import { User } from "../interfaces";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteUser, getAllUsers } from "../services/admin.service";
 import { toast } from "sonner";
-import { DeleteUserDialog } from "./delete-user-dialog";
+import { DeleteDialog } from "./delete-dialog";
 
 interface UserListProps {
   onEdit: (user: User) => void;
@@ -62,8 +62,8 @@ export function UserList({ onEdit }: UserListProps) {
                     Delete
                   </button>
 
-                  <DeleteUserDialog
-                    user={user}
+                  <DeleteDialog
+                    name={user?.first_name}
                     isOpen={deletingUserId === user.id}
                     onConfirm={() => {
                       mutate(user.id);

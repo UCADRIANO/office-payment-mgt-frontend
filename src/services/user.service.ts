@@ -1,28 +1,30 @@
-import { Record } from "../interfaces";
+import { Personnel } from "../interfaces";
 import api from "./base.service";
 
 export const getUsers = async () => {
   return await api.get("/users");
 };
 
-export const getRecords = async (db: string) => {
-  return await api.get(`/records/${db}`);
+export const getPersonnels = async (id: string) => {
+  const res = await api.get(`/personnels/db/${id}`);
+  return res.data.data;
 };
 
-export const createRecord = async (db: string, record: Partial<Record>) => {
-  return await api.post(`/records/${db}`, record);
-};
-
-export const updateRecord = async (
-  db: string,
-  id: string,
-  record: Partial<Record>
+export const createPersonnel = async (
+  personnel: Partial<Personnel> & { db_id: string }
 ) => {
-  return await api.put(`/records/${db}/${id}`, record);
+  return await api.post(`/personnels/`, personnel);
 };
 
-export const deleteRecord = async (db: string, id: string): Promise<void> => {
-  return await api.delete(`/records/${db}/${id}`);
+export const editPersonnel = async (
+  id: string,
+  personnel: Partial<Personnel>
+) => {
+  return await api.patch(`/personnels/${id}`, personnel);
+};
+
+export const deletePersonnel = async (id: string): Promise<void> => {
+  return await api.delete(`/personnels/${id}`);
 };
 
 export const exportRecords = async (db: string) => {
