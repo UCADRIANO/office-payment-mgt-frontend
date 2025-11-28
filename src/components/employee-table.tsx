@@ -1,20 +1,21 @@
 import React, { useState } from "react";
-import { Record } from "../interfaces";
+import { Personnel } from "../interfaces";
+import { Button } from "./ui/button";
 
 interface EmployeeTableProps {
-  records: Record[];
-  onEdit: (record: Record) => void;
-  onDelete: (id: string) => void;
+  personnel: Personnel[];
+  onEdit: (record: Personnel) => void;
+  onDelete: (id: Personnel) => void;
 }
 
 export function EmployeeTable({
-  records,
+  personnel,
   onEdit,
   onDelete,
 }: EmployeeTableProps) {
   const [filter, setFilter] = useState("");
-  const filtered = records.filter((r) =>
-    [r.armyNumber, r.firstName, r.lastName, r.rank, r.subSector, r.bankName]
+  const filtered = personnel.filter((r) =>
+    [r.army_number, r.first_name, r.last_name, r.rank, r.sub_sector, r.bank]
       .join(" ")
       .toLowerCase()
       .includes(filter.toLowerCase())
@@ -47,29 +48,29 @@ export function EmployeeTable({
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id}>
-                <td className="p-2 border">{r.armyNumber}</td>
+                <td className="p-2 border">{r.army_number}</td>
                 <td className="p-2 border">{r.rank}</td>
                 <td className="p-2 border">
-                  {r.firstName} {r.middleName} {r.lastName}
+                  {r.first_name} {r.middle_name} {r.last_name}
                 </td>
-                <td className="p-2 border">{r.phoneNumber}</td>
-                <td className="p-2 border">{r.bankName}</td>
-                <td className="p-2 border">{r.accountNumber}</td>
-                <td className="p-2 border">{r.subSector}</td>
+                <td className="p-2 border">{r.phone_number}</td>
+                <td className="p-2 border">{r.bank.name}</td>
+                <td className="p-2 border">{r.acct_number}</td>
+                <td className="p-2 border">{r.sub_sector}</td>
                 <td className="p-2 border">
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       onClick={() => onEdit(r)}
                       className="px-2 py-1 border rounded"
                     >
                       Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(r.id)}
+                    </Button>
+                    <Button
+                      onClick={() => onDelete(r)}
                       className="px-2 py-1 border rounded text-red-600"
                     >
                       Delete
-                    </button>
+                    </Button>
                   </div>
                 </td>
               </tr>
