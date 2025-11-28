@@ -27,7 +27,7 @@ export const deletePersonnel = async (id: string) => {
   return await api.delete(`/personnels/${id}`);
 };
 
-export const exportRecords = async (db: string) => {
-  const res = await api.put(`/records/${db}/export`);
-  return res;
-};
+// export const exportRecords = async (db: string) => {
+//   const res = await api.put(`/records/${db}/export`);
+//   return res;
+// };
