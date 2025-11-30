@@ -41,7 +41,10 @@ export function ShowPasswordModal({
         </div>
 
         <DialogFooter>
-          <Button onClick={onClose} className="w-full cursor-pointer bg-black">
+          <Button
+            onClick={onClose}
+            className="w-full cursor-pointer bg-black text-white"
+          >
             Close
           </Button>
         </DialogFooter>

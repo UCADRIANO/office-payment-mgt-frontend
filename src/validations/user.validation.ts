@@ -10,7 +10,20 @@ export const userSchema = z.object({
     .nonempty("At least one database must be selected"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
+
+export const editUserSchema = z.object({
+  first_name: z.string().min(1, "First name is required"),
+  last_name: z.string().min(1, "Last name is required"),
+  army_number: z.string().min(1, "Army number is required"),
+  role: z.enum(["user"], "Role is required"),
+  allowed_dbs: z
+    .array(z.string())
+    .nonempty("At least one database must be selected"),
+  password: z.string().optional(),
+});
+
 export type CreateUserSchemaType = z.infer<typeof userSchema>;
+export type EditUserSchemaType = z.infer<typeof editUserSchema>;
 
 export const EmployeeFormSchema = (isEditing: boolean) =>
   z

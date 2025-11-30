@@ -6,6 +6,7 @@ import { DatabasePage } from "./pages/database";
 import { Toaster } from "./components/ui/sonner";
 import { DashboardPage } from "./pages/dashboard";
 import { Header } from "./components/header";
+import ManageDbs from "./pages/manage-dbs";
 
 function PayrollApp() {
   return (
@@ -18,9 +19,9 @@ function PayrollApp() {
 
           <Route path="/dashboard" element={<DashboardPage />} />
 
-          <Route path="/dashboard/admin" element={<AdminPage />} />
-
           <Route path="/dashboard/db/:id" element={<DatabasePage />} />
+          <Route path="/dashboard/admin/dbs" element={<ManageDbs />} />
+          <Route path="/dashboard/admin/users" element={<AdminPage />} />
 
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>

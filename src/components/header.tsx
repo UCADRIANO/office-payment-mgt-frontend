@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppStore } from "../store/app-store";
 import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
 
 export function Header() {
   const { setUser } = useAppStore();
@@ -30,12 +31,12 @@ export function Header() {
               Dashboard
             </button>
             {user?.role === "admin" && (
-              <button
-                onClick={() => navigate("/dashboard/admin")}
+              <Button
+                onClick={() => navigate("/dashboard/admin/users")}
                 className="px-3 py-1 border rounded cursor-pointer"
               >
-                Admin
-              </button>
+                Manage Users
+              </Button>
             )}
 
             <button
