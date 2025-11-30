@@ -44,7 +44,7 @@ export function UserList({ onEdit }: UserListProps) {
               <td className="p-2 border">{`${user.first_name} ${user?.last_name}`}</td>
               <td className="p-2 border">{user.role}</td>
               <td className="p-2 border">
-                {(user.allowed_dbs || []).join(", ")}
+                {(user.allowed_dbs.map((db) => db.short_code) || []).join(", ")}
               </td>
               <td className="p-2 border">
                 <div className="flex gap-2">

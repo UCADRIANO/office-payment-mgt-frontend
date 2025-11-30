@@ -3,7 +3,7 @@ export interface User {
   first_name: string;
   last_name: string;
   role: "admin" | "user";
-  allowed_dbs: string[];
+  allowed_dbs: Db[];
   id: string;
 }
 
