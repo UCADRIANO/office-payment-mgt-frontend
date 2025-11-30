@@ -199,7 +199,7 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
                   <label key={d?.id} className="text-sm">
                     <input
                       type="checkbox"
-                      value={d?.short_code}
+                      value={d?.id}
                       {...register("allowed_dbs")}
                     />{" "}
                     <span className="ml-2">{d?.short_code}</span>
