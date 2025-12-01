@@ -5,6 +5,7 @@ export interface User {
   role: "admin" | "user";
   allowed_dbs: Db[];
   id: string;
+  is_generated?: boolean;
 }
 
 export interface Personnel {

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteUser, getAllUsers } from "../services/admin.service";
 import { toast } from "sonner";
 import { DeleteDialog } from "./delete-dialog";
+import { ResetPasswordModal } from "./reset-password-modal";
 
 interface UserListProps {
   onEdit: (user: User) => void;
@@ -11,6 +12,9 @@ interface UserListProps {
 
 export function UserList({ onEdit }: UserListProps) {
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [changingPasswordUserId, setChangingPasswordUserId] = useState<
+    string | null
+  >(null);
   const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
@@ -22,7 +26,7 @@ export function UserList({ onEdit }: UserListProps) {
     },
   });
 
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [] } = useQuery<User[]>({
     queryKey: ["users"],
     queryFn: getAllUsers,
   });
@@ -56,6 +60,13 @@ export function UserList({ onEdit }: UserListProps) {
                   </button>
 
                   <button
+                    onClick={() => setChangingPasswordUserId(user.id)}
+                    className="px-2 py-1 border rounded text-blue-600 cursor-pointer"
+                  >
+                    Change Password
+                  </button>
+
+                  <button
                     onClick={() => setDeletingUserId(user.id)}
                     className="px-2 py-1 border rounded text-red-600 cursor-pointer"
                   >
@@ -71,6 +82,12 @@ export function UserList({ onEdit }: UserListProps) {
                     }}
                     onCancel={() => setDeletingUserId(null)}
                     isPending={isPending}
+                  />
+
+                  <ResetPasswordModal
+                    isOpen={changingPasswordUserId === user.id}
+                    onClose={() => setChangingPasswordUserId(null)}
+                    userId={user.id!}
                   />
                 </div>
               </td>

@@ -4,7 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CreateUserSchemaType,
   userSchema,
+  editUserSchema,
+  EditUserSchemaType,
 } from "../validations/user.validation";
+
+type UserFormData = CreateUserSchemaType | EditUserSchemaType;
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { createUser, editUser } from "../services/admin.service";
@@ -33,8 +37,8 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
     setValue,
     trigger,
     formState: { errors },
-  } = useForm<CreateUserSchemaType>({
-    resolver: zodResolver(userSchema),
+  } = useForm<UserFormData>({
+    resolver: zodResolver(userToEdit ? editUserSchema : userSchema),
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
@@ -45,7 +49,15 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
   useEffect(() => {
     if (userToEdit) {
       Object.entries(userToEdit).forEach(([key, value]) => {
-        setValue(key as any, value);
+        if (key === "allowed_dbs") {
+          // Convert Db objects to array of IDs for the form
+          const dbIds = Array.isArray(value)
+            ? value.map((db: any) => db?.id || db).filter(Boolean)
+            : [];
+          setValue(key as any, dbIds);
+        } else {
+          setValue(key as any, value);
+        }
       });
       setGeneratedPassword("");
     } else {
@@ -74,15 +86,19 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
     }) => editUser(id, data),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      reset();
       toast.success(response?.data.message);
     },
   });
 
-  const onCreate = (data: CreateUserSchemaType) => {
+  const onCreate = (data: UserFormData) => {
     if (userToEdit) {
-      editUserMutation({ id: userToEdit.id!, data });
+      // For editing, exclude password if not provided
+      const { password, ...editData } = data;
+      const editPayload = password ? { ...editData, password } : editData;
+      editUserMutation({ id: userToEdit.id!, data: editPayload });
     } else {
-      mutate(data);
+      mutate(data as CreateUserSchemaType);
     }
   };
 
@@ -155,10 +171,15 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
           <input
             id="password"
             {...register("password")}
-            placeholder="Enter your password"
+            placeholder={
+              userToEdit
+                ? "Password cannot be changed here"
+                : "Enter your password"
+            }
             type="text"
             className="border p-2 rounded w-full"
             readOnly
+            disabled={!!userToEdit}
           />
           {!userToEdit && (
             <button
@@ -168,6 +189,12 @@ export function CreateUserForm({ userToEdit, onCancel }: CreateUserFormProps) {
             >
               Generate password
             </button>
+          )}
+          {userToEdit && (
+            <p className="text-gray-500 text-sm">
+              Use the "Change Password" button in the user list to update
+              password
+            </p>
           )}
           {errors.password && (
             <p className="text-red-500 text-sm">{errors.password.message}</p>

@@ -6,3 +6,20 @@ export const loginSchema = z.object({
 });
 
 export type LoginSchemaType = z.infer<typeof loginSchema>;
+
+export const changePasswordSchema = z.object({
+  old_password: z.string().min(1, "Old password is required"),
+  new_password: z
+    .string()
+    .min(6, "New password must be at least 6 characters long"),
+});
+
+export type ChangePasswordSchemaType = z.infer<typeof changePasswordSchema>;
+
+export const resetPasswordSchema = z.object({
+  new_password: z
+    .string()
+    .min(6, "New password must be at least 6 characters long"),
+});
+
+export type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;

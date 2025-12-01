@@ -1,13 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/app-store";
 import { useQuery } from "@tanstack/react-query";
 import { Db } from "../interfaces";
 import { getAllDbs } from "../services/admin.service";
+import { Button } from "../components/ui/button";
+import { ChangePasswordModal } from "../components/change-password-modal";
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user, dbs, setDbs } = useAppStore();
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
 
   const { data: allDbs = [] } = useQuery<Db[]>({
     queryKey: ["all-dbs"],
@@ -17,6 +20,13 @@ export function DashboardPage() {
   useEffect(() => {
     if (allDbs.length > 0) setDbs(allDbs);
   }, [allDbs, setDbs]);
+
+  useEffect(() => {
+    // Check if user needs password reset
+    if (user && user.is_generated && user.role !== "admin") {
+      setShowPasswordReset(true);
+    }
+  }, [user]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -51,37 +61,31 @@ export function DashboardPage() {
             </div>
           )}
         </div>
-
-        <div className="mt-6">
-          <h4 className="font-semibold">Quick actions</h4>
-          <div className="mt-2 space-y-2">
-            {/* <button
-              onClick={() => navigate(`/dashboard/db/${DB_NAMES[0]}`)}
-              className="w-full p-2 border rounded cursor-pointer"
-            >
-              Open default DB
-            </button> */}
-
-            {user?.role === "admin" && (
-              <button
-                onClick={() => navigate(`/dashboard/admin`)}
+        {user?.role === "admin" && (
+          <div className="mt-6">
+            <h4 className="font-semibold">Quick actions</h4>
+            <div className="mt-2 space-y-2">
+              <Button
+                onClick={() => navigate(`/dashboard/admin/dbs`)}
                 className="w-full p-2 border rounded"
               >
-                Manage Users
-              </button>
-            )}
+                Manage DBs
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="md:col-span-3">
         <div className="bg-white p-4 rounded shadow">
           <h2 className="text-lg font-semibold">Welcome, {user?.first_name}</h2>
           <p className="text-sm text-gray-500">
-            Role: admin — Allowed DBs:{" "}
+            Role: {user?.role} — Allowed DBs:{" "}
             {user?.allowed_dbs &&
               user.allowed_dbs.length > 0 &&
-              user.allowed_dbs.map((db) => <span key={db}>{db} </span>)}
+              user.allowed_dbs.map((db) => (
+                <span key={db.id}>{db.short_code} </span>
+              ))}
           </p>
 
           <div className="mt-4">
@@ -103,6 +107,11 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <ChangePasswordModal
+        isOpen={showPasswordReset}
+        onClose={() => setShowPasswordReset(false)}
+      />
     </div>
   );
 }

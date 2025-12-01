@@ -37,11 +37,11 @@ export function DbList({ setEditingDb }) {
 
       {allDbs.length === 0 && <p>No databases yet.</p>}
 
-      <div className="grid md:grid-cols-2 md:gap-14">
+      <div className="grid md:grid-cols-2 md:gap-8">
         {allDbs.map((db: Db) => (
           <div
             key={db.id}
-            className="border rounded p-3 mb-2 flex justify-between items-center"
+            className="border rounded p-3 flex justify-between items-center"
           >
             <div>
               <p className="font-medium">{db.name}</p>

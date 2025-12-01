@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { CreateUserForm } from "../components/create-user-form";
 import { UserList } from "../components/user-list";
-import { Db, User } from "../interfaces";
-import CreateDB from "../components/create-db";
-import { DbList } from "../components/DbList";
+import { User } from "../interfaces";
 
 export function AdminPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editingDb, setEditingDb] = useState<Db | null>(null);
 
   return (
     <div className="bg-white p-4 rounded shadow">
@@ -20,8 +17,6 @@ export function AdminPage() {
           onCancel={() => setEditingUser(null)}
         />
       </div>
-      <CreateDB editingDb={editingDb} />
-      <DbList setEditingDb={setEditingDb} />
     </div>
   );
 }
