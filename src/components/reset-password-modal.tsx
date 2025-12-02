@@ -5,11 +5,11 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { resetPassword } from "../services/auth.service";
 import {
   resetPasswordSchema,
   ResetPasswordSchemaType,
 } from "../validations/auth.validation";
+import { resetPassword } from "../services/user.service";
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
