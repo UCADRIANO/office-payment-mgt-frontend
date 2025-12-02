@@ -5,6 +5,7 @@ import { EmployeeForm } from "../components/employee-form";
 import { useLocation, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  createBulkPersonnel,
   createPersonnel,
   deletePersonnel,
   editPersonnel,
@@ -25,9 +26,13 @@ export function DatabasePage() {
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<"add" | "edit">("add");
   const [formData, setFormData] = useState<Personnel | null>(null);
+  const [personnelsToCreateBulk, setPersonnelsToCreateBulk] = useState<
+    (Partial<Personnel> & { db_id: string })[]
+  >([]);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel>();
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string>("");
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const location = useLocation();
@@ -36,10 +41,6 @@ export function DatabasePage() {
     queryKey: ["personnels"],
     queryFn: () => getPersonnels(id as string),
   });
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: createPersonnel,
@@ -81,40 +82,15 @@ export function DatabasePage() {
 
   const { mutate: bulkCreatePersonnel, isPending: isBulkCreating } =
     useMutation({
-      mutationFn: async (personnelData: Partial<Personnel>[]) => {
-        // Assuming backend has a bulk create endpoint
-        const API_BASE_URL = "http://127.0.0.1:8080";
-        const response = await fetch(`${API_BASE_URL}/personnels/bulk`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${
-              sessionStorage.getItem("app-storage")
-                ? JSON.parse(sessionStorage.getItem("app-storage")!).state.token
-                : ""
-            }`,
-          },
-          body: JSON.stringify({
-            personnels: personnelData.map((p) => ({ ...p, db_id: id })),
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create personnel records");
-        }
-
-        return response.json();
-      },
+      mutationFn: createBulkPersonnel,
       onSuccess: (response) => {
         toast.success(
-          response?.data?.message ||
-            `${response?.data?.created_count || 0} records created successfully`
+          response?.data?.message || `Personnels uploaded successfully`
         );
         queryClient.invalidateQueries({ queryKey: ["personnels"] });
         setShowBulkUploadModal(false);
-      },
-      onError: (error: any) => {
-        toast.error(error?.message || "Failed to create personnel records");
+        setPersonnelsToCreateBulk([]);
+        setSelectedFileName("");
       },
     });
 
@@ -242,7 +218,9 @@ export function DatabasePage() {
         return;
       }
 
-      bulkCreatePersonnel(personnels);
+      setPersonnelsToCreateBulk(
+        personnels.map((personnel) => ({ ...personnel, db_id: id as string }))
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to parse CSV file"
@@ -573,38 +551,55 @@ export function DatabasePage() {
               <label className="block text-sm font-medium mb-2">
                 Select CSV File
               </label>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    if (file.size > 10 * 1024 * 1024) {
-                      // 10MB limit
-                      toast.error("File size must be less than 10MB");
-                      return;
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        // 10MB limit
+                        toast.error("File size must be less than 10MB");
+                        setSelectedFileName("");
+                        return;
+                      }
+                      setSelectedFileName(file.name);
+                      handleBulkUpload(file);
+                    } else {
+                      setSelectedFileName("");
                     }
-                    handleBulkUpload(file);
-                  }
-                }}
-                className="w-full border p-2 rounded"
-                disabled={isBulkCreating}
-              />
+                  }}
+                  className="w-full border p-2 rounded file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                  disabled={isBulkCreating}
+                />
+                {selectedFileName && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    Selected:{" "}
+                    <span className="font-medium">{selectedFileName}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-3">
               <Button
-                onClick={() => setShowBulkUploadModal(false)}
+                onClick={() => {
+                  setShowBulkUploadModal(false);
+                  setSelectedFileName("");
+                }}
                 className="flex-1 px-4 py-2 border rounded"
                 disabled={isBulkCreating}
               >
                 Cancel
               </Button>
               <Button
-                disabled={!isBulkCreating}
+                disabled={isBulkCreating || personnelsToCreateBulk.length === 0}
+                isLoading={isBulkCreating}
+                onClick={() => bulkCreatePersonnel(personnelsToCreateBulk)}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
               >
-                {isBulkCreating ? "Uploading..." : "Upload Ready"}
+                {isBulkCreating ? "Uploading..." : "Upload"}
               </Button>
             </div>
 
