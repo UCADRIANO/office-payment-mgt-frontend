@@ -33,14 +33,28 @@ export function DatabasePage() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const location = useLocation();
+
+  const itemsPerPage = 50;
 
   const { data: personnel = [] } = useQuery<Personnel[]>({
     queryKey: ["personnels"],
     queryFn: () => getPersonnels(id as string),
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(personnel.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPersonnel = personnel.slice(startIndex, endIndex);
+
+  // Reset to first page when data changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [personnel.length]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: createPersonnel,
@@ -462,7 +476,7 @@ export function DatabasePage() {
 
       <div className="mt-4">
         <EmployeeTable
-          personnel={personnel}
+          personnel={currentPersonnel}
           onEdit={(dataToEdit) => {
             setFormMode("edit");
             setFormData(dataToEdit);
@@ -470,6 +484,64 @@ export function DatabasePage() {
           }}
           onDelete={(personnel) => setPersonnelToDelete(personnel)}
         />
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, personnel.length)}{" "}
+              of {personnel.length} personnel
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm"
+              >
+                Previous
+              </Button>
+
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((page) => {
+                    // Show first page, last page, current page, and pages around current
+                    return (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    );
+                  })
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-400">...</span>
+                      )}
+                      <Button
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 text-sm ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-white border hover:bg-gray-50"
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))}
+              </div>
+
+              <Button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {showForm && (

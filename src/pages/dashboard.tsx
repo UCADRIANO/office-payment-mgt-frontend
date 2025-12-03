@@ -4,8 +4,10 @@ import { useAppStore } from "../store/app-store";
 import { useQuery } from "@tanstack/react-query";
 import { Db } from "../interfaces";
 import { getAllDbs } from "../services/admin.service";
+import { getPersonnels } from "../services/user.service";
 import { Button } from "../components/ui/button";
 import { ChangePasswordModal } from "../components/change-password-modal";
+import { DatabaseChart } from "../components/database-chart";
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -15,6 +17,27 @@ export function DashboardPage() {
   const { data: allDbs = [] } = useQuery<Db[]>({
     queryKey: ["all-dbs"],
     queryFn: getAllDbs,
+  });
+
+  // Get personnel counts for each database
+  const { data: personnelCounts = {} } = useQuery({
+    queryKey: ["personnel-counts"],
+    queryFn: async () => {
+      const counts: Record<string, number> = {};
+      const databasesToCheck = user?.role === "admin" ? dbs : (user?.allowed_dbs || []);
+
+      for (const db of databasesToCheck) {
+        try {
+          const personnels = await getPersonnels(db.id);
+          counts[db.id] = personnels.length;
+        } catch (error) {
+          console.error(`Failed to get personnels for DB ${db.id}:`, error);
+          counts[db.id] = 0;
+        }
+      }
+      return counts;
+    },
+    enabled: dbs.length > 0 && !!user,
   });
 
   useEffect(() => {
@@ -27,6 +50,15 @@ export function DashboardPage() {
       setShowPasswordReset(true);
     }
   }, [user]);
+
+  // Prepare chart data based on user role
+  const chartData = React.useMemo(() => {
+    const databasesToShow = user?.role === "admin" ? dbs : (user?.allowed_dbs || []);
+    return databasesToShow.map((db) => ({
+      db,
+      count: personnelCounts[db.id] || 0,
+    }));
+  }, [dbs, user, personnelCounts]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -95,6 +127,13 @@ export function DashboardPage() {
             </p>
           </div>
         </div>
+
+        {/* Database Chart */}
+        {chartData.length > 0 && (
+          <div className="mt-4">
+            <DatabaseChart data={chartData} />
+          </div>
+        )}
 
         <div className="mt-4">
           <div className="bg-white p-4 rounded shadow">
