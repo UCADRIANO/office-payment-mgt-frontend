@@ -13,9 +13,9 @@ export function Header() {
     navigate("/");
   };
   return (
-    <header className="flex items-center justify-between mb-4">
+    <header className="flex items-center justify-between mb-4 bg-gray-50 p-4 rounded">
       <div>
-        <h1 className="text-2xl font-bold">Payroll Manager</h1>
+        <h1 className="text-2xl font-bold">401 SF BDE Payroll Manager</h1>
       </div>
       <div className="flex items-center gap-4">
         {user && (

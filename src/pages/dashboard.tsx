@@ -24,7 +24,8 @@ export function DashboardPage() {
     queryKey: ["personnel-counts"],
     queryFn: async () => {
       const counts: Record<string, number> = {};
-      const databasesToCheck = user?.role === "admin" ? dbs : (user?.allowed_dbs || []);
+      const databasesToCheck =
+        user?.role === "admin" ? dbs : user?.allowed_dbs || [];
 
       for (const db of databasesToCheck) {
         try {
@@ -53,7 +54,8 @@ export function DashboardPage() {
 
   // Prepare chart data based on user role
   const chartData = React.useMemo(() => {
-    const databasesToShow = user?.role === "admin" ? dbs : (user?.allowed_dbs || []);
+    const databasesToShow =
+      user?.role === "admin" ? dbs : user?.allowed_dbs || [];
     return databasesToShow.map((db) => ({
       db,
       count: personnelCounts[db.id] || 0,
@@ -76,7 +78,7 @@ export function DashboardPage() {
                     },
                   })
                 }
-                className="cursor-pointer w-full text-left p-2 rounded hover:bg-gray-50"
+                className="cursor-pointer w-full p-2 font-semibold border rounded hover:bg-gray-100"
               >
                 {db?.short_code}
               </button>
