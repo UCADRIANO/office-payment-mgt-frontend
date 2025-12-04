@@ -30,14 +30,14 @@ export function Header() {
             >
               Dashboard
             </button>
-            {user?.role === "admin" && (
+            {/* {user?.role === "admin" && (
               <Button
                 onClick={() => navigate("/dashboard/admin/users")}
                 className="px-3 py-1 border rounded cursor-pointer"
               >
                 Manage Users
               </Button>
-            )}
+            )} */}
 
             <button
               onClick={handleLogout}

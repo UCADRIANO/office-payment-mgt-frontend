@@ -106,6 +106,16 @@ export function DashboardPage() {
                 Manage DBs
               </Button>
             </div>
+            <div className="mt-2 space-y-2 w-full">
+              {user?.role === "admin" && (
+                <Button
+                  onClick={() => navigate("/dashboard/admin/users")}
+                  className="px-3 py-1 border rounded cursor-pointer w-full"
+                >
+                  Manage Users
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
