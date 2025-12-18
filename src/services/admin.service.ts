@@ -1,4 +1,10 @@
-import { CreateDb, CreateUserData } from "../interfaces";
+import {
+  CreateDb,
+  CreateUserData,
+  PaginatedResponse,
+  User,
+  Db,
+} from "../interfaces";
 import api from "./base.service";
 
 export const createUser = async (data: CreateUserData) => {
@@ -13,13 +19,23 @@ export const deleteUser = async (id: string) => {
   return await api.delete(`/admin/users/${id}`);
 };
 
-export const getAllUsers = async () => {
-  const res = await api.get("/admin/users");
+export const getAllUsers = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<User>> => {
+  const res = await api.get("/admin/users", {
+    params: { page, limit },
+  });
   return res.data.data;
 };
 
-export const getAllDbs = async () => {
-  const res = await api.get("/admin/dbs");
+export const getAllDbs = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<Db>> => {
+  const res = await api.get("/admin/dbs", {
+    params: { page, limit },
+  });
   return res.data.data;
 };
 
@@ -33,4 +49,28 @@ export const editDb = async (id: string, data: Partial<CreateDb>) => {
 
 export const deleteDb = async (id: string) => {
   return await api.delete(`/admin/dbs/${id}`);
+};
+
+export interface DashboardAnalytics {
+  databases: {
+    percentage_increase: number;
+    total: number;
+  };
+  new_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  users: {
+    percentage_increase: number;
+    total: number;
+  };
+}
+
+export const getDashboardAnalytics = async () => {
+  const res = await api.get("/analytics/dashboard");
+  return res.data.data as DashboardAnalytics;
 };

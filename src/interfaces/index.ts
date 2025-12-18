@@ -22,6 +22,7 @@ export interface Personnel {
   };
   acct_number: string;
   sub_sector: string;
+  status: PersonnelStatus | string;
   location?: string;
   remark?: string;
   createdAt?: string;
@@ -44,6 +45,11 @@ export interface CreateUserData {
 
 export type ViewType = "login" | "dashboard" | "admin-users" | "db";
 
+export enum PersonnelStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+}
+
 export interface CreateDb {
   name: string;
   short_code: string;
@@ -55,4 +61,18 @@ export interface Db {
   name: string;
   description: string;
   short_code: string;
+}
+
+export interface PaginationMeta {
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  limit: number;
+  page: number;
+  pageCount: number;
+  total: number;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
 }
