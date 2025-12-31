@@ -1,4 +1,4 @@
-import { Personnel } from "../interfaces";
+import { Personnel, PaginatedResponse } from "../interfaces";
 import api from "./base.service";
 
 export const getUsers = async () => {
@@ -12,8 +12,14 @@ export const resetPassword = async (data: {
   return await api.post("/admin/reset-password", data);
 };
 
-export const getPersonnels = async (id: string) => {
-  const res = await api.get(`/personnels/db/${id}`);
+export const getPersonnels = async (
+  id: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<PaginatedResponse<Personnel>> => {
+  const res = await api.get(`/personnels/db/${id}`, {
+    params: { page, limit },
+  });
   return res.data.data;
 };
 
@@ -38,4 +44,32 @@ export const editPersonnel = async (
 
 export const deletePersonnel = async (id: string) => {
   return await api.delete(`/personnels/${id}`);
+};
+
+export const bulkDeletePersonnels = async (personnelIds: string[]) => {
+  return await api.delete("/personnels/bulk-delete", {
+    data: {
+      personnels_id: personnelIds,
+    },
+  });
+};
+
+export interface PersonnelAnalytics {
+  total_active_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_inactive_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+}
+
+export const getPersonnelAnalytics = async (dbId: string) => {
+  const res = await api.get(`/analytics/personnels/db/${dbId}`);
+  return res.data.data as PersonnelAnalytics;
 };

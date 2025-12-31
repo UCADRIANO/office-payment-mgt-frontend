@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Personnel } from "../interfaces";
+import { Personnel, PaginatedResponse } from "../interfaces";
 import { EmployeeTable } from "../components/employee-table";
 import { EmployeeForm } from "../components/employee-form";
 import { useLocation, useParams } from "react-router-dom";
@@ -10,6 +10,9 @@ import {
   deletePersonnel,
   editPersonnel,
   getPersonnels,
+  getPersonnelAnalytics,
+  PersonnelAnalytics,
+  bulkDeletePersonnels,
 } from "../services/user.service";
 import { toast } from "sonner";
 import { queryClient } from "../main";
@@ -30,37 +33,45 @@ export function DatabasePage() {
     (Partial<Personnel> & { db_id: string })[]
   >([]);
   const [personnelToDelete, setPersonnelToDelete] = useState<Personnel>();
+  const [selectedPersonnelIds, setSelectedPersonnelIds] = useState<string[]>(
+    []
+  );
   const [showExportModal, setShowExportModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(50);
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const location = useLocation();
 
-  const itemsPerPage = 50;
-
-  const { data: personnel = [] } = useQuery<Personnel[]>({
-    queryKey: ["personnels"],
-    queryFn: () => getPersonnels(id as string),
+  const { data, isLoading } = useQuery<PaginatedResponse<Personnel>>({
+    queryKey: ["personnels", id, page, limit],
+    queryFn: () => getPersonnels(id as string, page, limit),
   });
 
-  // Pagination logic
-  const totalPages = Math.ceil(personnel.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentPersonnel = personnel.slice(startIndex, endIndex);
+  const { data: analytics } = useQuery<PersonnelAnalytics>({
+    queryKey: ["personnel-analytics", id],
+    queryFn: () => getPersonnelAnalytics(id as string),
+    enabled: !!id,
+  });
 
-  // Reset to first page when data changes
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [personnel.length]);
+  const personnel = data?.data || [];
+  const meta = data?.meta;
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const { mutate, isPending } = useMutation({
     mutationFn: createPersonnel,
     onSuccess: (response) => {
       toast.success(response?.data.message);
-      queryClient.invalidateQueries({ queryKey: ["personnels"] });
+      queryClient.invalidateQueries({ queryKey: ["personnels", id] });
+      queryClient.invalidateQueries({
+        queryKey: ["personnel-analytics", id],
+      });
       setShowForm(false);
       setFormData(null);
     },
@@ -77,7 +88,10 @@ export function DatabasePage() {
       }) => editPersonnel(id, personnel),
       onSuccess: (response) => {
         toast.success(response?.data.message);
-        queryClient.invalidateQueries({ queryKey: ["personnels"] });
+        queryClient.invalidateQueries({ queryKey: ["personnels", id] });
+        queryClient.invalidateQueries({
+          queryKey: ["personnel-analytics", id],
+        });
         setShowForm(false);
         setFormData(null);
       },
@@ -90,7 +104,10 @@ export function DatabasePage() {
       onSuccess: (response) => {
         toast.success(response?.data?.message);
         setPersonnelToDelete(undefined);
-        queryClient.invalidateQueries({ queryKey: ["personnels"] });
+        queryClient.invalidateQueries({ queryKey: ["personnels", id] });
+        queryClient.invalidateQueries({
+          queryKey: ["personnel-analytics", id],
+        });
       },
     });
 
@@ -101,10 +118,35 @@ export function DatabasePage() {
         toast.success(
           response?.data?.message || `Personnels uploaded successfully`
         );
-        queryClient.invalidateQueries({ queryKey: ["personnels"] });
+        queryClient.invalidateQueries({ queryKey: ["personnels", id] });
+        queryClient.invalidateQueries({
+          queryKey: ["personnel-analytics", id],
+        });
         setShowBulkUploadModal(false);
         setPersonnelsToCreateBulk([]);
         setSelectedFileName("");
+      },
+    });
+
+  const { mutate: bulkDeletePersonnelMutation, isPending: isBulkDeleting } =
+    useMutation({
+      mutationFn: bulkDeletePersonnels,
+      onSuccess: (response) => {
+        toast.success(
+          response?.data?.message ||
+            `${selectedPersonnelIds.length} personnels deleted successfully`
+        );
+        setSelectedPersonnelIds([]);
+        setShowBulkDeleteDialog(false);
+        queryClient.invalidateQueries({ queryKey: ["personnels", id] });
+        queryClient.invalidateQueries({
+          queryKey: ["personnel-analytics", id],
+        });
+      },
+      onError: (error: any) => {
+        toast.error(
+          error?.response?.data?.message || "Failed to delete personnels"
+        );
       },
     });
 
@@ -242,95 +284,44 @@ export function DatabasePage() {
     }
   };
 
-  const exportToCSV = () => {
-    if (personnel.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
-
-    const headers = [
-      "Army Number",
-      "Rank",
-      "First Name",
-      "Middle Name",
-      "Last Name",
-      "Phone Number",
-      "Bank Name",
-      "Account Number",
-      "Bank Sort Code",
-      "Sub Sector",
-      "Location",
-      "Remark",
-    ];
-
-    const csvData = personnel.map((person) => [
-      person.army_number,
-      person.rank,
-      person.first_name,
-      person.middle_name || "",
-      person.last_name,
-      person.phone_number,
-      person.bank.name,
-      person.acct_number,
-      person.bank.sort_code,
-      person.sub_sector,
-      person.location || "",
-      person.remark || "",
-    ]);
-
-    const csvContent = [headers, ...csvData]
-      .map((row) => row.map((field) => `"${field}"`).join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `personnel_${location.state?.dbName || "database"}_${
-        new Date().toISOString().split("T")[0]
-      }.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setShowExportModal(false);
-    toast.success("CSV exported successfully");
-  };
-
-  const exportToPDF = async () => {
-    if (personnel.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
-
+  const exportToCSV = async () => {
     try {
-      // Dynamic import to avoid loading jsPDF on every page load
-      const { default: jsPDF } = await import("jspdf");
+      // Fetch all personnel data and analytics for export
+      const [allPersonnelResponse, analytics] = await Promise.all([
+        getPersonnels(id as string, 1, 10000),
+        getPersonnelAnalytics(id as string),
+      ]);
+      const allPersonnel = allPersonnelResponse.data;
 
-      const doc = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      });
+      if (allPersonnel.length === 0) {
+        toast.error("No data to export");
+        return;
+      }
 
-      // Set up document
-      doc.setFontSize(18);
-      doc.text(
-        `Personnel Report - ${location.state?.dbName || "Database"}`,
-        14,
-        20
-      );
-      doc.setFontSize(10);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+      // Build analytics summary
+      const analyticsSummary = [
+        ["Personnel Analytics Summary"],
+        ["Generated on:", new Date().toLocaleDateString()],
+        [""],
+        ["Total Personnel:", analytics.total_personnel.total],
+        ["Total Active Personnel:", analytics.total_active_personnel.total],
+        ["Total Inactive Personnel:", analytics.total_inactive_personnel.total],
+        [
+          "Active Personnel % Increase:",
+          `${analytics.total_active_personnel.percentage_increase}%`,
+        ],
+        [
+          "Inactive Personnel % Increase:",
+          `${analytics.total_inactive_personnel.percentage_increase}%`,
+        ],
+        [
+          "Total Personnel % Increase:",
+          `${analytics.total_personnel.percentage_increase}%`,
+        ],
+        [""],
+        [""],
+      ];
 
-      // Define table parameters
-      const startY = 40;
-      const rowHeight = 8;
-      const colWidths = [25, 15, 25, 25, 25, 25, 25, 25, 25, 25, 25, 30]; // Column widths
       const headers = [
         "Army Number",
         "Rank",
@@ -343,11 +334,167 @@ export function DatabasePage() {
         "Bank Sort Code",
         "Sub Sector",
         "Location",
+        "Status",
+        "Remark",
+      ];
+
+      const csvData = allPersonnel.map((person) => [
+        person.army_number,
+        person.rank,
+        person.first_name,
+        person.middle_name || "",
+        person.last_name,
+        person.phone_number,
+        person.bank.name,
+        person.acct_number,
+        person.bank.sort_code,
+        person.sub_sector,
+        person.location || "",
+        person.status || "",
+        person.remark || "",
+      ]);
+
+      const csvContent = [
+        ...analyticsSummary.map((row) =>
+          row.map((field) => `"${field}"`).join(",")
+        ),
+        headers.map((field) => `"${field}"`).join(","),
+        ...csvData.map((row) => row.map((field) => `"${field}"`).join(",")),
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `personnel_${location.state?.dbName || "database"}_${
+          new Date().toISOString().split("T")[0]
+        }.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      setShowExportModal(false);
+      toast.success("CSV exported successfully");
+    } catch (error) {
+      toast.error("Failed to export CSV. Please try again.");
+      console.error("CSV export error:", error);
+    }
+  };
+
+  const exportToPDF = async () => {
+    try {
+      // Fetch all personnel data and analytics for export
+      const [allPersonnelResponse, analytics] = await Promise.all([
+        getPersonnels(id as string, 1, 10000),
+        getPersonnelAnalytics(id as string),
+      ]);
+      const allPersonnel = allPersonnelResponse.data;
+
+      if (allPersonnel.length === 0) {
+        toast.error("No data to export");
+        return;
+      }
+
+      // Dynamic import to avoid loading jsPDF on every page load
+      const { default: jsPDF } = await import("jspdf");
+
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Set up document
+      let currentY = 20;
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        `Personnel Report - ${location.state?.dbName || "Database"}`,
+        14,
+        currentY
+      );
+      currentY += 8;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Generated on: ${new Date().toLocaleDateString()}`,
+        14,
+        currentY
+      );
+      currentY += 10;
+
+      // Add analytics summary
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Personnel Analytics Summary", 14, currentY);
+      currentY += 8;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Total Personnel: ${analytics.total_personnel.total}`,
+        14,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Total Active Personnel: ${analytics.total_active_personnel.total}`,
+        14,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Total Inactive Personnel: ${analytics.total_inactive_personnel.total}`,
+        14,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Active Personnel % Increase: ${analytics.total_active_personnel.percentage_increase}%`,
+        14,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Inactive Personnel % Increase: ${analytics.total_inactive_personnel.percentage_increase}%`,
+        14,
+        currentY
+      );
+      currentY += 6;
+      doc.text(
+        `Total Personnel % Increase: ${analytics.total_personnel.percentage_increase}%`,
+        14,
+        currentY
+      );
+      currentY += 10;
+
+      // Define table parameters
+      const startY = currentY;
+      const rowHeight = 8;
+      const colWidths = [25, 15, 25, 25, 25, 25, 25, 25, 25, 25, 25, 20, 30]; // Added Status column
+      const headers = [
+        "Army Number",
+        "Rank",
+        "First Name",
+        "Middle Name",
+        "Last Name",
+        "Phone Number",
+        "Bank Name",
+        "Account Number",
+        "Bank Sort Code",
+        "Sub Sector",
+        "Location",
+        "Status",
         "Remark",
       ];
 
       // Draw headers
-      let currentY = startY;
+      currentY = startY;
       let currentX = 14;
 
       doc.setFontSize(9);
@@ -370,7 +517,7 @@ export function DatabasePage() {
       // Draw data rows
       doc.setFont("helvetica", "normal");
 
-      personnel.forEach((person, rowIndex) => {
+      allPersonnel.forEach((person, rowIndex) => {
         // Check if we need a new page
         if (currentY + rowHeight > 190) {
           // Leave margin for footer
@@ -392,6 +539,7 @@ export function DatabasePage() {
           person.bank.sort_code,
           person.sub_sector,
           person.location || "",
+          person.status || "",
           person.remark || "",
         ];
 
@@ -419,7 +567,7 @@ export function DatabasePage() {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.text(`Page ${i} of ${totalPages}`, 14, 200);
-        doc.text(`Total Records: ${personnel.length}`, 200, 200);
+        doc.text(`Total Records: ${allPersonnel.length}`, 200, 200);
       }
 
       // Save the PDF
@@ -446,6 +594,113 @@ export function DatabasePage() {
 
   return (
     <div className="bg-white p-4 rounded shadow mt-4" ref={printableRef}>
+      {/* Analytics Cards */}
+      {analytics && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">
+                  Total Personnel
+                </p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {analytics.total_personnel.total}
+                </p>
+              </div>
+              <div className="p-2 bg-blue-100 rounded-full">
+                <svg
+                  className="w-6 h-6 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">
+              {analytics.total_personnel.percentage_increase > 0 ? "+" : ""}
+              {analytics.total_personnel.percentage_increase}% from last period
+            </p>
+          </div>
+
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">
+                  Active Personnel
+                </p>
+                <p className="text-2xl font-bold text-green-900">
+                  {analytics.total_active_personnel.total}
+                </p>
+              </div>
+              <div className="p-2 bg-green-100 rounded-full">
+                <svg
+                  className="w-6 h-6 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-xs text-green-600 mt-2">
+              {analytics.total_active_personnel.percentage_increase > 0
+                ? "+"
+                : ""}
+              {analytics.total_active_personnel.percentage_increase}% from last
+              period
+            </p>
+          </div>
+
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-red-600 font-medium">
+                  Inactive Personnel
+                </p>
+                <p className="text-2xl font-bold text-red-900">
+                  {analytics.total_inactive_personnel.total}
+                </p>
+              </div>
+              <div className="p-2 bg-red-100 rounded-full">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p className="text-xs text-red-600 mt-2">
+              {analytics.total_inactive_personnel.percentage_increase > 0
+                ? "+"
+                : ""}
+              {analytics.total_inactive_personnel.percentage_increase}% from
+              last period
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">DB: {location.state?.dbName}</h2>
         <div className="flex gap-2">
@@ -471,76 +726,124 @@ export function DatabasePage() {
           >
             Export
           </Button>
+          {selectedPersonnelIds.length > 0 && (
+            <Button
+              onClick={() => setShowBulkDeleteDialog(true)}
+              className="px-3 py-1 border rounded bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete Selected ({selectedPersonnelIds.length})
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="mt-4">
-        <EmployeeTable
-          personnel={currentPersonnel}
-          onEdit={(dataToEdit) => {
-            setFormMode("edit");
-            setFormData(dataToEdit);
-            setShowForm(true);
-          }}
-          onDelete={(personnel) => setPersonnelToDelete(personnel)}
-        />
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-600">
-              Showing {startIndex + 1} to {Math.min(endIndex, personnel.length)}{" "}
-              of {personnel.length} personnel
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 text-sm"
-              >
-                Previous
-              </Button>
-
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    // Show first page, last page, current page, and pages around current
-                    return (
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    );
-                  })
-                  .map((page, index, array) => (
-                    <React.Fragment key={page}>
-                      {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="px-2 text-gray-400">...</span>
-                      )}
-                      <Button
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 text-sm ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "bg-white border hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </Button>
-                    </React.Fragment>
-                  ))}
-              </div>
-
-              <Button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm"
-              >
-                Next
-              </Button>
-            </div>
+        {isLoading ? (
+          <div className="p-4 text-center">
+            <p>Loading personnel...</p>
           </div>
+        ) : (
+          <>
+            <EmployeeTable
+              personnel={personnel}
+              selectedIds={selectedPersonnelIds}
+              onSelectionChange={setSelectedPersonnelIds}
+              onEdit={(dataToEdit) => {
+                setFormMode("edit");
+                setFormData(dataToEdit);
+                setShowForm(true);
+              }}
+              onDelete={(personnel) => setPersonnelToDelete(personnel)}
+            />
+
+            {/* Pagination Controls */}
+            {meta && meta.pageCount > 1 && (
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {(page - 1) * limit + 1} to{" "}
+                  {Math.min(page * limit, meta.total)} of {meta.total} personnel
+                </div>
+                <div className="flex gap-2 items-center">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={!meta.hasPrevPage || isLoading}
+                    className="px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <div className="flex gap-1">
+                    {(() => {
+                      const pages: (number | string)[] = [];
+
+                      // Always show first page
+                      pages.push(1);
+
+                      // Add ellipsis if needed before current range
+                      if (page > 3) {
+                        pages.push("ellipsis-start");
+                      }
+
+                      // Show pages around current page
+                      const startPage = Math.max(2, page - 1);
+                      const endPage = Math.min(meta.pageCount - 1, page + 1);
+
+                      for (let i = startPage; i <= endPage; i++) {
+                        if (i !== 1 && i !== meta.pageCount) {
+                          pages.push(i);
+                        }
+                      }
+
+                      // Add ellipsis if needed after current range
+                      if (page < meta.pageCount - 2) {
+                        pages.push("ellipsis-end");
+                      }
+
+                      // Always show last page if there's more than one page
+                      if (meta.pageCount > 1) {
+                        pages.push(meta.pageCount);
+                      }
+
+                      return pages.map((pageItem, idx) => {
+                        if (
+                          pageItem === "ellipsis-start" ||
+                          pageItem === "ellipsis-end"
+                        ) {
+                          return (
+                            <span key={`ellipsis-${idx}`} className="px-2">
+                              ...
+                            </span>
+                          );
+                        }
+
+                        const pageNum = pageItem as number;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => handlePageChange(pageNum)}
+                            disabled={isLoading}
+                            className={`px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                              pageNum === page
+                                ? "bg-blue-500 text-white"
+                                : "hover:bg-gray-100"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={!meta.hasNextPage || isLoading}
+                    className="px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -569,6 +872,16 @@ export function DatabasePage() {
         }}
         onCancel={() => setPersonnelToDelete(undefined)}
         isPending={isDeleteingPersonnel}
+      />
+
+      <DeleteDialog
+        name={`${selectedPersonnelIds.length} personnel`}
+        isOpen={showBulkDeleteDialog}
+        onConfirm={() => {
+          bulkDeletePersonnelMutation(selectedPersonnelIds);
+        }}
+        onCancel={() => setShowBulkDeleteDialog(false)}
+        isPending={isBulkDeleting}
       />
 
       <Dialog open={showExportModal} onOpenChange={setShowExportModal}>

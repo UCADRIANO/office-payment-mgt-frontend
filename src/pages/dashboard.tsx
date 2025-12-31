@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/app-store";
 import { useQuery } from "@tanstack/react-query";
-import { Db } from "../interfaces";
-import { getAllDbs } from "../services/admin.service";
+import { Db, PaginatedResponse } from "../interfaces";
+import {
+  getAllDbs,
+  getDashboardAnalytics,
+  DashboardAnalytics,
+} from "../services/admin.service";
 import { getPersonnels } from "../services/user.service";
 import { Button } from "../components/ui/button";
 import { ChangePasswordModal } from "../components/change-password-modal";
@@ -14,9 +18,17 @@ export function DashboardPage() {
   const { user, dbs, setDbs } = useAppStore();
   const [showPasswordReset, setShowPasswordReset] = useState(false);
 
-  const { data: allDbs = [] } = useQuery<Db[]>({
-    queryKey: ["all-dbs"],
-    queryFn: getAllDbs,
+  const { data: dbsResponse } = useQuery<PaginatedResponse<Db>>({
+    queryKey: ["all-dbs", 1, 10],
+    queryFn: () => getAllDbs(1, 10),
+  });
+
+  const allDbs = dbsResponse?.data || [];
+
+  // Get dashboard analytics
+  const { data: analytics } = useQuery<DashboardAnalytics>({
+    queryKey: ["dashboard-analytics"],
+    queryFn: getDashboardAnalytics,
   });
 
   // Get personnel counts for each database
@@ -29,8 +41,8 @@ export function DashboardPage() {
 
       for (const db of databasesToCheck) {
         try {
-          const personnels = await getPersonnels(db.id);
-          counts[db.id] = personnels.length;
+          const personnelsResponse = await getPersonnels(db.id, 1, 1);
+          counts[db.id] = personnelsResponse.meta.total;
         } catch (error) {
           console.error(`Failed to get personnels for DB ${db.id}:`, error);
           counts[db.id] = 0;
@@ -140,7 +152,76 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Database Chart */}
+        {/* Analytics Cards */}
+        {analytics && (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">
+                    Total Databases
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {analytics.databases.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                {analytics.databases.percentage_increase > 0 ? "+" : ""}
+                {analytics.databases.percentage_increase}% from last period
+              </p>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">
+                    Total Personnel
+                  </p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {analytics.personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-green-600 mt-2">
+                {analytics.personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.personnel.percentage_increase}% from last period
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Database Chart with Summary */}
         {chartData.length > 0 && (
           <div className="mt-4">
             <DatabaseChart data={chartData} />

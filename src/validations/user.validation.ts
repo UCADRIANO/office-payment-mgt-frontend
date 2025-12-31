@@ -31,7 +31,10 @@ export const EmployeeFormSchema = (isEditing: boolean) =>
       army_number: z.string().nonempty("Army Number is required"),
       rank: z.string().nonempty("Rank is required"),
       first_name: z.string().nonempty("First name is required"),
-      middle_name: z.string().optional(),
+      middle_name: z
+        .union([z.string(), z.literal("")])
+        .optional()
+        .transform((val) => (val === "" ? undefined : val)),
       last_name: z.string().nonempty("Last name is required"),
       phone_number: z.string().nonempty("Phone number is required"),
       bank: z.object({
@@ -40,8 +43,19 @@ export const EmployeeFormSchema = (isEditing: boolean) =>
       }),
       acct_number: z.string().nonempty("Account number is required"),
       sub_sector: z.string().nonempty("Sub sector is required"),
-      location: z.string().optional(),
-      remark: z.string().optional(),
+      location: z
+        .union([z.string(), z.literal("")])
+        .optional()
+        .transform((val) => (val === "" ? undefined : val)),
+      remark: z
+        .union([z.string(), z.literal("")])
+        .optional()
+        .transform((val) => (val === "" ? undefined : val)),
+      status: isEditing
+        ? z.enum(["active", "inactive"], {
+            required_error: "Status is required",
+          })
+        : z.string().optional(),
     })
     .partial()
     .refine((data) => {

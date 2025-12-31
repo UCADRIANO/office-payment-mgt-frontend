@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Personnel } from "../interfaces";
+import { Personnel, PersonnelStatus } from "../interfaces";
 import { BANKS, RANKS, SUB_SECTORS } from "../data/constants";
 import { EmployeeFormSchema } from "../validations/user.validation";
 import { Button } from "./ui/button";
+import { Select } from "./ui/select";
 
 interface EmployeeFormProps {
   mode?: "add" | "edit";
@@ -46,6 +47,7 @@ export function EmployeeForm({
       sub_sector: "",
       location: "",
       remark: "",
+      status: "",
       ...initialData,
     },
   });
@@ -340,6 +342,32 @@ export function EmployeeForm({
           )}
         />
       </div>
+
+      {mode === "edit" && (
+        <div>
+          <label className="block mb-1">Status *</label>
+          <Controller
+            name="status"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                value={field.value || ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                placeholder="Select Status"
+                className="w-full"
+              >
+                <option value="">Select Status</option>
+                <option value={PersonnelStatus.ACTIVE}>Active</option>
+                <option value={PersonnelStatus.INACTIVE}>Inactive</option>
+              </Select>
+            )}
+          />
+          {errors.status && (
+            <p className="text-red-500 text-sm">{errors.status.message}</p>
+          )}
+        </div>
+      )}
 
       <div className="md:col-span-2 flex gap-2">
         <Button
