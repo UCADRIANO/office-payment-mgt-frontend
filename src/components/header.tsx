@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppStore } from "../store/app-store";
 import { useNavigate } from "react-router-dom";
+import logo from "../../public/images/401_Logo.jpeg";
 import { Button } from "./ui/button";
 
 export function Header() {
@@ -13,9 +14,20 @@ export function Header() {
     navigate("/");
   };
   return (
-    <header className="flex items-center justify-between mb-4">
+    <header className="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded">
+      <span></span>
       <div>
-        <h1 className="text-2xl font-bold">Payroll Manager</h1>
+        {" "}
+        <img
+          src={logo}
+          alt="401 SF Bde Logo"
+          className="h-12 w-12 object-contain"
+        />
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold">
+          <a href="/dashboard">401 SF BDE PAYROLL MANAGER</a>
+        </h1>
       </div>
       <div className="flex items-center gap-4">
         {user && (
@@ -30,14 +42,14 @@ export function Header() {
             >
               Dashboard
             </button>
-            {user?.role === "admin" && (
+            {/* {user?.role === "admin" && (
               <Button
                 onClick={() => navigate("/dashboard/admin/users")}
                 className="px-3 py-1 border rounded cursor-pointer"
               >
                 Manage Users
               </Button>
-            )}
+            )} */}
 
             <button
               onClick={handleLogout}
