@@ -20,7 +20,6 @@ export function EmployeeTable({
   selectedIds = [],
   onSelectionChange,
 }: EmployeeTableProps) {
-  const [filter, setFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [statusSort, setStatusSort] = useState<SortOrder>(null);
 
@@ -33,24 +32,6 @@ export function EmployeeTable({
   // Filter and sort personnel
   const filteredAndSorted = useMemo(() => {
     let result = [...personnel];
-
-    // Apply text filter
-    if (filter) {
-      result = result.filter((r) =>
-        [
-          r.army_number,
-          r.first_name,
-          r.last_name,
-          r.rank,
-          r.sub_sector,
-          r.bank?.name || "",
-          r.status,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(filter.toLowerCase())
-      );
-    }
 
     // Apply status filter
     if (statusFilter) {
@@ -71,7 +52,7 @@ export function EmployeeTable({
     }
 
     return result;
-  }, [personnel, filter, statusFilter, statusSort]);
+  }, [personnel, statusFilter, statusSort]);
 
   const isAllSelected =
     filteredAndSorted.length > 0 &&
@@ -112,12 +93,6 @@ export function EmployeeTable({
   return (
     <div>
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <input
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Search..."
-          className="border p-2 rounded flex-1 min-w-[200px]"
-        />
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}

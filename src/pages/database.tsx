@@ -42,13 +42,14 @@ export function DatabasePage() {
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
+  const [search, setSearch] = useState("");
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const location = useLocation();
 
   const { data, isLoading } = useQuery<PaginatedResponse<Personnel>>({
-    queryKey: ["personnels", id, page, limit],
-    queryFn: () => getPersonnels(id as string, page, limit),
+    queryKey: ["personnels", id, page, limit, search],
+    queryFn: () => getPersonnels(id as string, page, limit, search),
   });
 
   const { data: analytics } = useQuery<PersonnelAnalytics>({
@@ -62,6 +63,11 @@ export function DatabasePage() {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
   };
 
   const { mutate, isPending } = useMutation({
@@ -134,7 +140,7 @@ export function DatabasePage() {
       onSuccess: (response) => {
         toast.success(
           response?.data?.message ||
-            `${selectedPersonnelIds.length} personnels deleted successfully`
+          `${selectedPersonnelIds.length} personnels deleted successfully`
         );
         setSelectedPersonnelIds([]);
         setShowBulkDeleteDialog(false);
@@ -186,8 +192,7 @@ export function DatabasePage() {
       const values = parseCSVLine(lines[i]);
       if (values.length !== headers.length) {
         throw new Error(
-          `Row ${i + 1}: Expected ${headers.length} columns, got ${
-            values.length
+          `Row ${i + 1}: Expected ${headers.length} columns, got ${values.length
           }`
         );
       }
@@ -368,8 +373,7 @@ export function DatabasePage() {
       link.setAttribute("href", url);
       link.setAttribute(
         "download",
-        `personnel_${location.state?.dbName || "database"}_${
-          new Date().toISOString().split("T")[0]
+        `personnel_${location.state?.dbName || "database"}_${new Date().toISOString().split("T")[0]
         }.csv`
       );
       link.style.visibility = "hidden";
@@ -571,9 +575,8 @@ export function DatabasePage() {
       }
 
       // Save the PDF
-      const filename = `personnel_${location.state?.dbName || "database"}_${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
+      const filename = `personnel_${location.state?.dbName || "database"}_${new Date().toISOString().split("T")[0]
+        }.pdf`;
       doc.save(filename);
 
       setShowExportModal(false);
@@ -738,6 +741,12 @@ export function DatabasePage() {
       </div>
 
       <div className="mt-4">
+        <input
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Search personnel..."
+          className="border p-2 rounded w-full mb-4"
+        />
         {isLoading ? (
           <div className="p-4 text-center">
             <p>Loading personnel...</p>
@@ -821,11 +830,10 @@ export function DatabasePage() {
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
                             disabled={isLoading}
-                            className={`px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                              pageNum === page
+                            className={`px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pageNum === page
                                 ? "bg-blue-500 text-white"
                                 : "hover:bg-gray-100"
-                            }`}
+                              }`}
                           >
                             {pageNum}
                           </button>

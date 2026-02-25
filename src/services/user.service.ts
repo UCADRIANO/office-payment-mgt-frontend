@@ -15,29 +15,30 @@ export const resetPassword = async (data: {
 export const getPersonnels = async (
   id: string,
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  search: string = "",
 ): Promise<PaginatedResponse<Personnel>> => {
   const res = await api.get(`/personnels/db/${id}`, {
-    params: { page, limit },
+    params: { page, limit, ...(search ? { search } : {}) },
   });
   return res.data.data;
 };
 
 export const createPersonnel = async (
-  personnel: Partial<Personnel> & { db_id: string }
+  personnel: Partial<Personnel> & { db_id: string },
 ) => {
   return await api.post(`/personnels/`, personnel);
 };
 
 export const createBulkPersonnel = async (
-  data: (Partial<Personnel> & { db_id: string })[]
+  data: (Partial<Personnel> & { db_id: string })[],
 ) => {
   return await api.post(`/personnels/upload`, data);
 };
 
 export const editPersonnel = async (
   id: string,
-  personnel: Partial<Personnel>
+  personnel: Partial<Personnel>,
 ) => {
   return await api.patch(`/personnels/${id}`, personnel);
 };
