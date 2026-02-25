@@ -21,7 +21,7 @@ export const deleteUser = async (id: string) => {
 
 export const getAllUsers = async (
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<PaginatedResponse<User>> => {
   const res = await api.get("/admin/users", {
     params: { page, limit },
@@ -31,7 +31,7 @@ export const getAllUsers = async (
 
 export const getAllDbs = async (
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<PaginatedResponse<Db>> => {
   const res = await api.get("/admin/dbs", {
     params: { page, limit },
@@ -57,6 +57,10 @@ export interface DashboardAnalytics {
     total: number;
   };
   new_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  deleted_personnel: {
     percentage_increase: number;
     total: number;
   };

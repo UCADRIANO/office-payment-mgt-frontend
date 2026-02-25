@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Personnel, PaginatedResponse } from "../interfaces";
+import { Personnel, PaginatedResponse, PersonnelStatus } from "../interfaces";
 import { EmployeeTable } from "../components/employee-table";
 import { EmployeeForm } from "../components/employee-form";
 import { useLocation, useParams } from "react-router-dom";
@@ -42,13 +42,25 @@ export function DatabasePage() {
   const [selectedFileName, setSelectedFileName] = useState<string>("");
   const [page, setPage] = useState(1);
   const [limit] = useState(50);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const printableRef = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const location = useLocation();
 
+  const statusOptions = [
+    { value: PersonnelStatus.ACTIVE, label: "Active" },
+    { value: PersonnelStatus.INACTIVE, label: "Inactive" },
+    { value: PersonnelStatus.AWOL, label: "AWOL" },
+    { value: PersonnelStatus.DEATH, label: "Death" },
+    { value: PersonnelStatus.RTU, label: "RTU" },
+    { value: PersonnelStatus.POSTED, label: "Posted" },
+    { value: PersonnelStatus.CSE, label: "CSE" },
+  ];
+
   const { data, isLoading } = useQuery<PaginatedResponse<Personnel>>({
-    queryKey: ["personnels", id, page, limit],
-    queryFn: () => getPersonnels(id as string, page, limit),
+    queryKey: ["personnels", id, page, limit, search, statusFilter],
+    queryFn: () => getPersonnels(id as string, page, limit, search, statusFilter),
   });
 
   const { data: analytics } = useQuery<PersonnelAnalytics>({
@@ -62,6 +74,16 @@ export function DatabasePage() {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
   };
 
   const { mutate, isPending } = useMutation({
@@ -134,7 +156,7 @@ export function DatabasePage() {
       onSuccess: (response) => {
         toast.success(
           response?.data?.message ||
-            `${selectedPersonnelIds.length} personnels deleted successfully`
+          `${selectedPersonnelIds.length} personnels deleted successfully`
         );
         setSelectedPersonnelIds([]);
         setShowBulkDeleteDialog(false);
@@ -186,8 +208,7 @@ export function DatabasePage() {
       const values = parseCSVLine(lines[i]);
       if (values.length !== headers.length) {
         throw new Error(
-          `Row ${i + 1}: Expected ${headers.length} columns, got ${
-            values.length
+          `Row ${i + 1}: Expected ${headers.length} columns, got ${values.length
           }`
         );
       }
@@ -368,8 +389,7 @@ export function DatabasePage() {
       link.setAttribute("href", url);
       link.setAttribute(
         "download",
-        `personnel_${location.state?.dbName || "database"}_${
-          new Date().toISOString().split("T")[0]
+        `personnel_${location.state?.dbName || "database"}_${new Date().toISOString().split("T")[0]
         }.csv`
       );
       link.style.visibility = "hidden";
@@ -571,9 +591,8 @@ export function DatabasePage() {
       }
 
       // Save the PDF
-      const filename = `personnel_${location.state?.dbName || "database"}_${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
+      const filename = `personnel_${location.state?.dbName || "database"}_${new Date().toISOString().split("T")[0]
+        }.pdf`;
       doc.save(filename);
 
       setShowExportModal(false);
@@ -596,109 +615,234 @@ export function DatabasePage() {
     <div className="bg-white p-4 rounded shadow mt-4" ref={printableRef}>
       {/* Analytics Cards */}
       {analytics && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">
-                  Total Personnel
-                </p>
-                <p className="text-2xl font-bold text-blue-900">
-                  {analytics.total_personnel.total}
-                </p>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">
+                    Total Personnel
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {analytics.total_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-blue-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
+                  </svg>
+                </div>
               </div>
-              <div className="p-2 bg-blue-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
-                  />
-                </svg>
-              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                {analytics.total_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_personnel.percentage_increase}% from last period
+              </p>
             </div>
-            <p className="text-xs text-blue-600 mt-2">
-              {analytics.total_personnel.percentage_increase > 0 ? "+" : ""}
-              {analytics.total_personnel.percentage_increase}% from last period
-            </p>
+
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-green-600 font-medium">
+                    Active Personnel
+                  </p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {analytics.total_active_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-green-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-green-600 mt-2">
+                {analytics.total_active_personnel.percentage_increase > 0
+                  ? "+"
+                  : ""}
+                {analytics.total_active_personnel.percentage_increase}% from last
+                period
+              </p>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-600 font-medium">
+                    Inactive Personnel
+                  </p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {analytics.total_inactive_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-red-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-red-600 mt-2">
+                {analytics.total_inactive_personnel.percentage_increase > 0
+                  ? "+"
+                  : ""}
+                {analytics.total_inactive_personnel.percentage_increase}% from
+                last period
+              </p>
+            </div>
           </div>
 
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium">
-                  Active Personnel
-                </p>
-                <p className="text-2xl font-bold text-green-900">
-                  {analytics.total_active_personnel.total}
-                </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-orange-600 font-medium">AWOL</p>
+                  <p className="text-2xl font-bold text-orange-900">
+                    {analytics.total_awol_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-orange-100 rounded-full">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
               </div>
-              <div className="p-2 bg-green-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
+              <p className="text-xs text-orange-600 mt-2">
+                {analytics.total_awol_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_awol_personnel.percentage_increase}% from last period
+              </p>
             </div>
-            <p className="text-xs text-green-600 mt-2">
-              {analytics.total_active_personnel.percentage_increase > 0
-                ? "+"
-                : ""}
-              {analytics.total_active_personnel.percentage_increase}% from last
-              period
-            </p>
-          </div>
 
-          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-red-600 font-medium">
-                  Inactive Personnel
-                </p>
-                <p className="text-2xl font-bold text-red-900">
-                  {analytics.total_inactive_personnel.total}
-                </p>
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">CSE</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {analytics.total_cse_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
               </div>
-              <div className="p-2 bg-red-100 rounded-full">
-                <svg
-                  className="w-6 h-6 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
+              <p className="text-xs text-purple-600 mt-2">
+                {analytics.total_cse_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_cse_personnel.percentage_increase}% from last period
+              </p>
             </div>
-            <p className="text-xs text-red-600 mt-2">
-              {analytics.total_inactive_personnel.percentage_increase > 0
-                ? "+"
-                : ""}
-              {analytics.total_inactive_personnel.percentage_increase}% from
-              last period
-            </p>
+
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 font-medium">Death</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {analytics.total_death_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-gray-200 rounded-full">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">
+                {analytics.total_death_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_death_personnel.percentage_increase}% from last period
+              </p>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-600 font-medium">Deleted</p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {analytics.total_deleted_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-red-100 rounded-full">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-red-600 mt-2">
+                {analytics.total_deleted_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_deleted_personnel.percentage_increase}% from last period
+              </p>
+            </div>
+
+            <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-teal-600 font-medium">Posted</p>
+                  <p className="text-2xl font-bold text-teal-900">
+                    {analytics.total_posted_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-teal-100 rounded-full">
+                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-teal-600 mt-2">
+                {analytics.total_posted_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_posted_personnel.percentage_increase}% from last period
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-600 font-medium">RTU</p>
+                  <p className="text-2xl font-bold text-yellow-900">
+                    {analytics.total_rtu_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-yellow-600 mt-2">
+                {analytics.total_rtu_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.total_rtu_personnel.percentage_increase}% from last period
+              </p>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       <div className="flex items-center justify-between">
@@ -738,6 +882,34 @@ export function DatabasePage() {
       </div>
 
       <div className="mt-4">
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <input
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search personnel..."
+            className="border p-2 rounded flex-1 min-w-[200px]"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => handleStatusFilterChange(e.target.value)}
+            className="border p-2 rounded w-[200px] h-10"
+          >
+            <option value="">All Statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+          {statusFilter && (
+            <button
+              onClick={() => handleStatusFilterChange("")}
+              className="px-3 py-1 border rounded text-sm cursor-pointer hover:bg-gray-100"
+            >
+              Clear Filter
+            </button>
+          )}
+        </div>
         {isLoading ? (
           <div className="p-4 text-center">
             <p>Loading personnel...</p>
@@ -821,11 +993,10 @@ export function DatabasePage() {
                             key={pageNum}
                             onClick={() => handlePageChange(pageNum)}
                             disabled={isLoading}
-                            className={`px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                              pageNum === page
-                                ? "bg-blue-500 text-white"
-                                : "hover:bg-gray-100"
-                            }`}
+                            className={`px-3 py-1 border rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pageNum === page
+                              ? "bg-blue-500 text-white"
+                              : "hover:bg-gray-100"
+                              }`}
                           >
                             {pageNum}
                           </button>

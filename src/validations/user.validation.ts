@@ -52,9 +52,12 @@ export const EmployeeFormSchema = (isEditing: boolean) =>
         .optional()
         .transform((val) => (val === "" ? undefined : val)),
       status: isEditing
-        ? z.enum(["active", "inactive"], {
-            required_error: "Status is required",
-          })
+        ? z.enum(
+            ["active", "inactive", "awol", "death", "rtu", "posted", "cse"],
+            {
+              message: "Status is required",
+            },
+          )
         : z.string().optional(),
     })
     .partial()

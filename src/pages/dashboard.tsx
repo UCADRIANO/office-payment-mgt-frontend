@@ -74,6 +74,7 @@ export function DashboardPage() {
     }));
   }, [dbs, user, personnelCounts]);
 
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div className="md:col-span-1 bg-white p-4 rounded shadow">
@@ -216,6 +217,71 @@ export function DashboardPage() {
               <p className="text-xs text-green-600 mt-2">
                 {analytics.personnel.percentage_increase > 0 ? "+" : ""}
                 {analytics.personnel.percentage_increase}% from last period
+              </p>
+            </div>
+
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-red-600 font-medium">
+                    Deleted Personnel(s)
+                  </p>
+                  <p className="text-2xl font-bold text-red-900">
+                    {analytics.deleted_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-red-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-red-600 mt-2">
+                {analytics.deleted_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.deleted_personnel.percentage_increase}% from last period
+              </p>
+            </div>
+
+
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-600 font-medium">
+                    New Personnel(s)
+                  </p>
+                  <p className="text-2xl font-bold text-yellow-900">
+                    {analytics.new_personnel.total}
+                  </p>
+                </div>
+                <div className="p-2 bg-yellow-100 rounded-full">
+                  <svg
+                    className="w-6 h-6 text-yellow-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-xs text-yellow-600 mt-2">
+                {analytics.new_personnel.percentage_increase > 0 ? "+" : ""}
+                {analytics.new_personnel.percentage_increase}% from last period
               </p>
             </div>
           </div>

@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Personnel, PersonnelStatus } from "../interfaces";
+import { Personnel } from "../interfaces";
 import { Button } from "./ui/button";
-import { Select } from "./ui/select";
 
 interface EmployeeTableProps {
   personnel: Personnel[];
@@ -20,42 +19,11 @@ export function EmployeeTable({
   selectedIds = [],
   onSelectionChange,
 }: EmployeeTableProps) {
-  const [filter, setFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
   const [statusSort, setStatusSort] = useState<SortOrder>(null);
 
-  // Status enum values
-  const statusOptions = [
-    { value: PersonnelStatus.ACTIVE, label: "Active" },
-    { value: PersonnelStatus.INACTIVE, label: "Inactive" },
-  ];
-
-  // Filter and sort personnel
-  const filteredAndSorted = useMemo(() => {
+  // Sort personnel
+  const sortedPersonnel = useMemo(() => {
     let result = [...personnel];
-
-    // Apply text filter
-    if (filter) {
-      result = result.filter((r) =>
-        [
-          r.army_number,
-          r.first_name,
-          r.last_name,
-          r.rank,
-          r.sub_sector,
-          r.bank?.name || "",
-          r.status,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(filter.toLowerCase())
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter) {
-      result = result.filter((r) => r.status === statusFilter);
-    }
 
     // Apply status sort
     if (statusSort) {
@@ -71,18 +39,18 @@ export function EmployeeTable({
     }
 
     return result;
-  }, [personnel, filter, statusFilter, statusSort]);
+  }, [personnel, statusSort]);
 
   const isAllSelected =
-    filteredAndSorted.length > 0 &&
-    filteredAndSorted.every((p) => selectedIds.includes(p.id));
+    sortedPersonnel.length > 0 &&
+    sortedPersonnel.every((p) => selectedIds.includes(p.id));
   const isIndeterminate =
-    selectedIds.length > 0 && selectedIds.length < filteredAndSorted.length;
+    selectedIds.length > 0 && selectedIds.length < sortedPersonnel.length;
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onSelectionChange) {
       if (e.target.checked) {
-        onSelectionChange(filteredAndSorted.map((p) => p.id));
+        onSelectionChange(sortedPersonnel.map((p) => p.id));
       } else {
         onSelectionChange([]);
       }
@@ -112,25 +80,6 @@ export function EmployeeTable({
   return (
     <div>
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <input
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          placeholder="Search..."
-          className="border p-2 rounded flex-1 min-w-[200px]"
-        />
-        <Select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          placeholder="Filter by status"
-          className="w-[200px] h-10"
-        >
-          <option value="">All Statuses</option>
-          {statusOptions.map((status) => (
-            <option key={status.value} value={status.value}>
-              {status.label}
-            </option>
-          ))}
-        </Select>
         <Button
           onClick={handleSortToggle}
           variant={statusSort ? "default" : "outline"}
@@ -140,16 +89,6 @@ export function EmployeeTable({
           {statusSort === "asc" && " ↑"}
           {statusSort === "desc" && " ↓"}
         </Button>
-        {statusFilter && (
-          <Button
-            onClick={() => setStatusFilter("")}
-            variant="ghost"
-            size="sm"
-            className="whitespace-nowrap"
-          >
-            Clear Filter
-          </Button>
-        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
@@ -189,7 +128,7 @@ export function EmployeeTable({
             </tr>
           </thead>
           <tbody>
-            {filteredAndSorted.map((r) => (
+            {sortedPersonnel.map((r) => (
               <tr key={r.id}>
                 {onSelectionChange && (
                   <td className="p-2 border">
@@ -229,7 +168,7 @@ export function EmployeeTable({
                 </td>
               </tr>
             ))}
-            {filteredAndSorted.length === 0 && (
+            {sortedPersonnel.length === 0 && (
               <tr>
                 <td
                   colSpan={onSelectionChange ? 10 : 9}
