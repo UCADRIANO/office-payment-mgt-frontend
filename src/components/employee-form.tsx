@@ -360,6 +360,11 @@ export function EmployeeForm({
                 <option value="">Select Status</option>
                 <option value={PersonnelStatus.ACTIVE}>Active</option>
                 <option value={PersonnelStatus.INACTIVE}>Inactive</option>
+                <option value={PersonnelStatus.AWOL}>AWOL</option>
+                <option value={PersonnelStatus.DEATH}>Death</option>
+                <option value={PersonnelStatus.RTU}>RTU</option>
+                <option value={PersonnelStatus.POSTED}>Posted</option>
+                <option value={PersonnelStatus.CSE}>CSE</option>
               </Select>
             )}
           />

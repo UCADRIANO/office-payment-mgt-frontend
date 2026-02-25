@@ -48,6 +48,11 @@ export type ViewType = "login" | "dashboard" | "admin-users" | "db";
 export enum PersonnelStatus {
   ACTIVE = "active",
   INACTIVE = "inactive",
+  AWOL = "awol",
+  DEATH = "death",
+  RTU = "rtu",
+  POSTED = "posted",
+  CSE = "cse",
 }
 
 export interface CreateDb {

@@ -17,9 +17,15 @@ export const getPersonnels = async (
   page: number = 1,
   limit: number = 10,
   search: string = "",
+  filter: string = "",
 ): Promise<PaginatedResponse<Personnel>> => {
   const res = await api.get(`/personnels/db/${id}`, {
-    params: { page, limit, ...(search ? { search } : {}) },
+    params: {
+      page,
+      limit,
+      ...(search ? { search } : {}),
+      ...(filter ? { filter } : {}),
+    },
   });
   return res.data.data;
 };
@@ -65,6 +71,30 @@ export interface PersonnelAnalytics {
     total: number;
   };
   total_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_awol_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_cse_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_death_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_deleted_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_posted_personnel: {
+    percentage_increase: number;
+    total: number;
+  };
+  total_rtu_personnel: {
     percentage_increase: number;
     total: number;
   };

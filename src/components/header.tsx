@@ -1,8 +1,6 @@
-import React from "react";
+
 import { useAppStore } from "../store/app-store";
 import { useNavigate } from "react-router-dom";
-import logo from "../../public/images/401_Logo.jpeg";
-import { Button } from "./ui/button";
 
 export function Header() {
   const { setUser } = useAppStore();
@@ -19,7 +17,7 @@ export function Header() {
       <div>
         {" "}
         <img
-          src={logo}
+          src={"/images/401_Logo.jpeg"}
           alt="401 SF Bde Logo"
           className="h-12 w-12 object-contain"
         />
